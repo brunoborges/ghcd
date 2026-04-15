@@ -29,7 +29,7 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 ### Local development / testing
 
 ```bash
-claude --plugin-dir ./agents-plugin
+claude --plugin-dir ./agent-plugin
 ```
 
 ## How it works
@@ -65,7 +65,7 @@ After TTL:    ghc pr list ...   → ~1.0s (TTL expired, fresh call)
 ## Plugin structure
 
 ```
-agents-plugin/
+agent-plugin/
 ├── .claude-plugin/
 │   └── plugin.json      # Plugin manifest
 ├── bin/

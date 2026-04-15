@@ -78,14 +78,14 @@ If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Cop
 /plugin install ghcd@agent-plugins
 ```
 
-> **Local development / testing:** `claude --plugin-dir ./agents-plugin`
+> **Local development / testing:** `claude --plugin-dir ./agent-plugin`
 
 The plugin:
 - **Lazy-installs** `ghc` and `ghcd` binaries on first use
 - **Adds `ghc` to PATH** so agents use it automatically
 - **Includes a skill** that teaches agents to prefer `ghc` for all GitHub CLI calls
 
-See the [plugin README](agents-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghcd/releases) with the `plugin-v*` tag.
+See the [plugin README](agent-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghcd/releases) with the `plugin-v*` tag.
 
 ## Usage
 

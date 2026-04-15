@@ -31,34 +31,34 @@ jobs:
 
           # Required files
           for f in \
-            agents-plugin/.claude-plugin/plugin.json \
-            agents-plugin/bin/ghc \
-            agents-plugin/bin/ghcd \
-            agents-plugin/scripts/install.sh \
-            agents-plugin/skills/ghcd/SKILL.md \
-            agents-plugin/README.md; do
+            agent-plugin/.claude-plugin/plugin.json \
+            agent-plugin/bin/ghc \
+            agent-plugin/bin/ghcd \
+            agent-plugin/scripts/install.sh \
+            agent-plugin/skills/ghcd/SKILL.md \
+            agent-plugin/README.md; do
             [ -f "$f" ] || { echo "Missing: $f"; exit 1; }
           done
 
           # Validate JSON
-          python3 -m json.tool agents-plugin/.claude-plugin/plugin.json > /dev/null
+          python3 -m json.tool agent-plugin/.claude-plugin/plugin.json > /dev/null
 
           # Validate scripts parse
-          bash -n agents-plugin/bin/ghc
-          bash -n agents-plugin/bin/ghcd
-          bash -n agents-plugin/scripts/install.sh
+          bash -n agent-plugin/bin/ghc
+          bash -n agent-plugin/bin/ghcd
+          bash -n agent-plugin/scripts/install.sh
 
           # Ensure bin scripts are executable
-          [ -x agents-plugin/bin/ghc ] || { echo "bin/ghc not executable"; exit 1; }
-          [ -x agents-plugin/bin/ghcd ] || { echo "bin/ghcd not executable"; exit 1; }
-          [ -x agents-plugin/scripts/install.sh ] || { echo "scripts/install.sh not executable"; exit 1; }
+          [ -x agent-plugin/bin/ghc ] || { echo "bin/ghc not executable"; exit 1; }
+          [ -x agent-plugin/bin/ghcd ] || { echo "bin/ghcd not executable"; exit 1; }
+          [ -x agent-plugin/scripts/install.sh ] || { echo "scripts/install.sh not executable"; exit 1; }
 
           echo "✓ Plugin structure valid"
 
       - name: Stamp version in plugin.json
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          cd agents-plugin
+          cd agent-plugin
           python3 -c "
           import json, sys
           with open('.claude-plugin/plugin.json', 'r+') as f:
@@ -75,7 +75,7 @@ jobs:
       - name: Package plugin
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          tar -czf "ghcd-plugin-${VERSION}.tar.gz" -C agents-plugin .
+          tar -czf "ghcd-plugin-${VERSION}.tar.gz" -C agent-plugin .
           echo "Packaged plugin:"
           tar -tzf "ghcd-plugin-${VERSION}.tar.gz" | head -20
 
