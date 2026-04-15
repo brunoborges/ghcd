@@ -30,8 +30,8 @@ func TestDefaultConfigDirectory(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		if strings.Contains(ghxDir, "/") && !strings.Contains(ghxDir, `\`) {
-			t.Errorf("on Windows, directory should use backslashes, got: %s", ghxDir)
+		if !strings.HasSuffix(ghxDir, "ghx") {
+			t.Errorf("on Windows, directory should end with 'ghx', got: %s", ghxDir)
 		}
 	} else {
 		if !strings.Contains(ghxDir, ".ghx") {
