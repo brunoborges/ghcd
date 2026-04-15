@@ -182,6 +182,34 @@ func (s *Server) startHTTP() {
 		json.NewEncoder(w).Encode(recs)
 	})
 
+	// Mutating endpoints — POST only, origin-validated
+	mux.HandleFunc("/api/flush", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		resource := allowlist.ResourceType(r.URL.Query().Get("resource"))
+		count := s.cache.Flush(resource)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"flushed": count})
+	})
+
+	mux.HandleFunc("/api/shutdown", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "shutting_down"})
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			s.Shutdown()
+		}()
+	})
+
 	s.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("127.0.0.1:%d", s.cfg.DashboardPort),
 		Handler: mux,

@@ -80,11 +80,48 @@ const dashboardHTML = `<!DOCTYPE html>
   footer { padding: 24px 0; text-align: center; color: var(--text-dimmer); font-size: 12px; margin-top: 32px; border-top: 1px solid var(--border); }
   footer a { color: var(--text-dim); text-decoration: none; }
   footer a:hover { color: var(--text); }
+
+  .actions { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+  .actions button, .actions select {
+    font-family: var(--mono); font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); color: var(--text);
+  }
+  .actions button { background: var(--surface); transition: background 0.15s; }
+  .actions button:hover { background: var(--border); }
+  .actions button.danger { border-color: var(--red); color: var(--red); }
+  .actions button.danger:hover { background: rgba(248,81,73,0.15); }
+  .actions select { background: var(--surface); }
+  .actions .spacer { flex: 1; }
+  .actions .status-msg { font-size: 12px; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+  .actions .status-msg.show { opacity: 1; }
 </style>
 </head>
 <body>
 <h1><span>ghx</span> Dashboard</h1>
 <p class="subtitle">GitHub CLI Cache Proxy — <span id="uptime">-</span></p>
+
+<div class="actions">
+  <button id="flushBtn" onclick="doFlush()">Flush Cache</button>
+  <select id="flushResource">
+    <option value="">All</option>
+    <option value="pr">PR</option>
+    <option value="issue">Issue</option>
+    <option value="repo">Repo</option>
+    <option value="run">Run</option>
+    <option value="workflow">Workflow</option>
+    <option value="release">Release</option>
+    <option value="search">Search</option>
+    <option value="api">API</option>
+    <option value="gist">Gist</option>
+    <option value="project">Project</option>
+    <option value="cache">Cache</option>
+    <option value="ruleset">Ruleset</option>
+    <option value="org">Org</option>
+    <option value="label">Label</option>
+  </select>
+  <span id="actionStatus" class="status-msg"></span>
+  <span class="spacer"></span>
+  <button class="danger" onclick="doShutdown()">Shutdown Daemon</button>
+</div>
 
 <div class="cards">
   <div class="card"><div class="value blue" id="total">-</div><div class="label">Total Requests</div></div>
@@ -208,6 +245,32 @@ $('#cmdtable thead').addEventListener('click', e => {
 
 refresh();
 setInterval(refresh, 2000);
+
+function showStatus(msg, isError) {
+  const el = $('#actionStatus');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function doFlush() {
+  const resource = $('#flushResource').value;
+  const url = resource ? '/api/flush?resource=' + resource : '/api/flush';
+  fetch(url, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => { showStatus('Flushed ' + d.flushed + ' entries'); refresh(); })
+    .catch(() => showStatus('Flush failed', true));
+}
+
+function doShutdown() {
+  if (!confirm('Shut down the ghxd daemon? The dashboard will become unavailable.')) return;
+  fetch('/api/shutdown', { method: 'POST' })
+    .then(() => {
+      document.body.innerHTML = '<div style="text-align:center;margin-top:20vh;color:var(--text-dim);font-family:monospace"><h2>Daemon stopped</h2><p>ghxd has been shut down. Restart with: <code>ghx xdaemon start -d</code></p></div>';
+    })
+    .catch(() => showStatus('Shutdown failed', true));
+}
 </script>
 </body>
 </html>`
