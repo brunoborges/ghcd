@@ -28,12 +28,12 @@ func main() {
 		return
 	}
 
-	// Handle ghx-specific subcommands
+	// Handle ghx-specific subcommands (x-prefixed to avoid conflicts with gh)
 	switch args[0] {
-	case "daemon":
+	case "xdaemon":
 		handleDaemon(cfg, args[1:])
 		return
-	case "cache":
+	case "xcache":
 		handleCache(cfg, args[1:])
 		return
 	}
@@ -124,7 +124,7 @@ func main() {
 
 func handleDaemon(cfg *config.Config, args []string) {
 	if len(args) == 0 {
-		fmt.Println("Usage: ghx daemon <start|stop|status|restart>")
+		fmt.Println("Usage: ghx xdaemon <start|stop|status|restart>")
 		os.Exit(1)
 	}
 
@@ -191,7 +191,7 @@ func handleDaemon(cfg *config.Config, args []string) {
 
 func handleCache(cfg *config.Config, args []string) {
 	if len(args) == 0 {
-		fmt.Println("Usage: ghx cache <stats|flush|keys>")
+		fmt.Println("Usage: ghx xcache <stats|flush|keys>")
 		os.Exit(1)
 	}
 

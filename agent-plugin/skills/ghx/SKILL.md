@@ -54,18 +54,18 @@ gh issue view 42
 ## Cache management
 
 ```bash
-ghx cache stats             # View hit rates and per-command breakdown
-ghx cache flush             # Flush all cached entries
-ghx cache flush pr          # Flush only PR-related entries
-ghx cache keys              # List cached keys (debugging)
+ghx xcache stats             # View hit rates and per-command breakdown
+ghx xcache flush             # Flush all cached entries
+ghx xcache flush pr          # Flush only PR-related entries
+ghx xcache keys              # List cached keys (debugging)
 ```
 
 ## Daemon management
 
 ```bash
-ghx daemon status           # Check if daemon is running, view uptime
-ghx daemon stop             # Stop the daemon
-ghx daemon restart          # Restart the daemon
+ghx xdaemon status           # Check if daemon is running, view uptime
+ghx xdaemon stop             # Stop the daemon
+ghx xdaemon restart          # Restart the daemon
 ```
 
 ## Per-command overrides

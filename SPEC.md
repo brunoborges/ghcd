@@ -176,21 +176,21 @@ ghx pr list --repo owner/repo --json number,title
 ### Daemon Management
 
 ```bash
-ghx daemon start          # Start daemon (foreground, for debugging)
-ghx daemon start -d       # Start daemon (background, detached)
-ghx daemon stop           # Graceful shutdown
-ghx daemon status         # Show PID, uptime, cache stats summary
-ghx daemon restart        # Stop + start
+ghx xdaemon start          # Start daemon (foreground, for debugging)
+ghx xdaemon start -d       # Start daemon (background, detached)
+ghx xdaemon stop           # Graceful shutdown
+ghx xdaemon status         # Show PID, uptime, cache stats summary
+ghx xdaemon restart        # Stop + start
 ```
 
 ### Cache Management
 
 ```bash
-ghx cache flush           # Flush all cached entries
-ghx cache flush pr        # Flush all PR-related entries
-ghx cache flush --repo owner/repo  # Flush entries for a specific repo
-ghx cache stats           # Show hit rate, per-command breakdown
-ghx cache keys            # List currently cached keys (for debugging)
+ghx xcache flush           # Flush all cached entries
+ghx xcache flush pr        # Flush all PR-related entries
+ghx xcache flush --repo owner/repo  # Flush entries for a specific repo
+ghx xcache stats           # Show hit rate, per-command breakdown
+ghx xcache keys            # List currently cached keys (for debugging)
 ```
 
 ### Configuration
@@ -251,7 +251,7 @@ Default max entries: 1000 (configurable). When exceeded, least-recently-used ent
 
 ### Tracked Metrics
 
-The daemon tracks the following internally, exposed via `ghx cache stats` and the web dashboard:
+The daemon tracks the following internally, exposed via `ghx xcache stats` and the web dashboard:
 
 - **Total requests** (and per-command)
 - **Cache hits / misses / passthrough** (counts and percentages)
@@ -264,7 +264,7 @@ The daemon tracks the following internally, exposed via `ghx cache stats` and th
 ### CLI Stats
 
 ```bash
-$ ghx cache stats
+$ ghx xcache stats
 Uptime:          2h 34m
 Total Requests:  1,247
 Cache Hits:      891 (71.4%)
@@ -416,8 +416,8 @@ ghx/
 - Singleflight request coalescing
 - Coarse-grained invalidation after mutations
 - Auto-start daemon, fallback to direct `gh` on failure
-- `ghx cache stats` for CLI metrics
-- `ghx daemon start/stop/status`
+- `ghx xcache stats` for CLI metrics
+- `ghx xdaemon start/stop/status`
 - Config file support
 - Web dashboard with per-command stats, request log, and TTL analysis
 - JSON API for scripting

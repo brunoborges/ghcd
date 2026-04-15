@@ -123,11 +123,11 @@ GHX_TTL=60 ghx pr list ...     # Same via env var
 ## Daemon Management
 
 ```bash
-ghx daemon start          # Start in foreground
-ghx daemon start -d       # Start detached (background)
-ghx daemon stop           # Graceful shutdown
-ghx daemon status         # Show uptime and cache stats
-ghx daemon restart        # Stop + start
+ghx xdaemon start          # Start in foreground
+ghx xdaemon start -d       # Start detached (background)
+ghx xdaemon stop           # Graceful shutdown
+ghx xdaemon status         # Show uptime and cache stats
+ghx xdaemon restart        # Stop + start
 ```
 
 The daemon auto-starts on first `ghx` call. If the daemon can't start, `ghx` falls back to running `gh` directly — it never blocks you.
@@ -135,10 +135,10 @@ The daemon auto-starts on first `ghx` call. If the daemon can't start, `ghx` fal
 ## Cache Management
 
 ```bash
-ghx cache stats           # Show hit rates and per-command breakdown
-ghx cache flush           # Flush all entries
-ghx cache flush pr        # Flush PR-related entries only
-ghx cache keys            # List cached keys (debugging)
+ghx xcache stats           # Show hit rates and per-command breakdown
+ghx xcache flush           # Flush all entries
+ghx xcache flush pr        # Flush PR-related entries only
+ghx xcache keys            # List cached keys (debugging)
 ```
 
 ### Example stats output
