@@ -364,7 +364,7 @@ log_file: ~/.ghx/ghxd.log
 
 ### `gh` Shim
 
-The install script places a lightweight shim at `INSTALL_DIR/gh` when no real `gh` is found. The shim contains a `# ghx-shim` marker comment for detection:
+Every installation method places a `gh` shim alongside the `ghx` binary. The shim contains a `# ghx-shim` marker comment for detection:
 
 ```sh
 #!/bin/sh
@@ -372,6 +372,14 @@ The install script places a lightweight shim at `INSTALL_DIR/gh` when no real `g
 exec ghx "$@"
 ```
 
+**Distribution across install channels:**
+
+| Channel | Behavior |
+|---|---|
+| **Release tarball** | Shim included in the tarball alongside `ghx` and `ghxd` |
+| **install.sh** | Always installs the shim unless a real `gh` binary already exists at the target path (checked via absence of `ghx-shim` marker) |
+| **Homebrew formula** | Installs the shim; `conflicts_with "gh"` prevents coexistence with the official `gh` formula |
+| **Agent plugin** | `bin/gh` wrapper delegates to the co-located `ghx` wrapper; plugin install script also places a shim alongside the real binaries |
 **Shim detection** uses three strategies to prevent infinite recursion:
 1. **Symlink resolution** — `filepath.EvalSymlinks` to see if `gh` resolves to the same file as `ghx`
 2. **Inode comparison** — `os.SameFile` to catch hardlinks

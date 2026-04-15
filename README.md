@@ -33,7 +33,7 @@ brew install ghxd
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
 ```
 
-This detects your OS and architecture, downloads the latest release, and installs `ghx` and `ghxd` to `/usr/local/bin`. If the GitHub CLI (`gh`) is not already installed, a lightweight shim is also installed that redirects `gh` commands through `ghx`. To install elsewhere:
+This detects your OS and architecture, downloads the latest release, and installs `ghx`, `ghxd`, and a `gh` shim to `/usr/local/bin`. The shim routes all `gh` commands through `ghx` for automatic caching. If a real `gh` binary already exists at the install path, it is left untouched and instructions are printed for manual replacement. To install elsewhere:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | INSTALL_DIR=~/.local/bin bash
@@ -105,7 +105,7 @@ The download includes **SHA-256 checksum verification** against the official rel
 
 ### The `gh` shim
 
-When you install ghx via the install script and `gh` is not already installed, a lightweight shim script is placed at the same location as `ghx` (e.g., `/usr/local/bin/gh`). This shim simply redirects all `gh` commands through `ghx`:
+Every installation method places a lightweight `gh` shim script alongside the `ghx` binary — whether installed via the install script, Homebrew, or the agent plugin. This shim redirects all `gh` commands through `ghx`:
 
 ```sh
 #!/bin/sh
@@ -113,7 +113,13 @@ When you install ghx via the install script and `gh` is not already installed, a
 exec ghx "$@"
 ```
 
-This means existing tools, scripts, and CI workflows that call `gh` will automatically benefit from caching — no changes needed. The shim is **only installed if no real `gh` is found** in `PATH` at install time.
+This means existing tools, scripts, and CI workflows that call `gh` will automatically benefit from caching — no changes needed.
+
+| Install method | Shim location | Notes |
+|---|---|---|
+| **install.sh** | `$INSTALL_DIR/gh` (default `/usr/local/bin/gh`) | Skipped if a real `gh` binary already exists at that path |
+| **Homebrew** | `$(brew --prefix)/bin/gh` | `conflicts_with "gh"` — uninstall the `gh` formula first |
+| **Agent plugin** | Plugin `bin/` directory (on PATH) | Always installed; delegates to co-located `ghx` wrapper |
 
 ### Example first-run experience
 
