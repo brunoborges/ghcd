@@ -17,40 +17,53 @@ A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that elimin
 - 📊 **Web dashboard** — real-time hit rates, per-command stats, request log
 - 🔌 **Drop-in replacement** — just use `ghc` instead of `gh`
 
-## Quick Start
+## Install
 
-### Install from source
+### Homebrew (recommended)
+
+```bash
+brew tap brunoborges/tap
+brew install ghcd
+```
+
+### Quick install script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | bash
+```
+
+This detects your OS and architecture, downloads the latest release, and installs `ghc` and `ghcd` to `/usr/local/bin`. To install elsewhere:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | INSTALL_DIR=~/.local/bin bash
+```
+
+### Manual download
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/brunoborges/ghcd/releases):
+
+```bash
+# macOS (Apple Silicon)
+curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-darwin-arm64.tar.gz | tar xz
+sudo cp ghc ghcd /usr/local/bin/
+
+# Linux (x64)
+curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-linux-amd64.tar.gz | tar xz
+sudo cp ghc ghcd /usr/local/bin/
+
+# Linux (arm64)
+curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-linux-arm64.tar.gz | tar xz
+sudo cp ghc ghcd /usr/local/bin/
+```
+
+### Build from source
 
 ```bash
 git clone https://github.com/brunoborges/ghcd.git
 cd ghcd
 make build
-```
-
-This produces two binaries in `bin/`:
-- **`ghc`** — the CLI client (drop-in `gh` replacement)
-- **`ghcd`** — the cache daemon
-
-Add `bin/` to your PATH, or copy both binaries somewhere in your PATH:
-
-```bash
-cp bin/ghc bin/ghcd /usr/local/bin/
-```
-
-### Install from release
-
-```bash
-# macOS (Apple Silicon)
-curl -sL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-darwin-arm64.tar.gz | tar xz
-cp ghc ghcd /usr/local/bin/
-
-# macOS (Intel)
-curl -sL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-darwin-amd64.tar.gz | tar xz
-cp ghc ghcd /usr/local/bin/
-
-# Linux (amd64)
-curl -sL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-linux-amd64.tar.gz | tar xz
-cp ghc ghcd /usr/local/bin/
+# Binaries are in bin/ghc and bin/ghcd
+sudo cp bin/ghc bin/ghcd /usr/local/bin/
 ```
 
 ## Usage
