@@ -134,9 +134,14 @@ func TestExtractFromTarGz_RejectsPathTraversal(t *testing.T) {
 func TestExtractFromZip(t *testing.T) {
 	dir := t.TempDir()
 
+	entryName := "gh_2.0.0_macOS_arm64/bin/gh"
+	if runtime.GOOS == "windows" {
+		entryName = "gh_2.0.0_windows_amd64/bin/gh.exe"
+	}
+
 	archivePath := filepath.Join(dir, "gh_2.0.0_macOS_arm64.zip")
 	ghContent := []byte("#!/bin/sh\necho gh")
-	createTestZip(t, archivePath, "gh_2.0.0_macOS_arm64/bin/gh", ghContent)
+	createTestZip(t, archivePath, entryName, ghContent)
 
 	destPath := filepath.Join(dir, "gh")
 	if err := extractFromZip(archivePath, destPath); err != nil {
