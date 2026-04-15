@@ -9,17 +9,17 @@ import (
 )
 
 type Config struct {
-	TTL              time.Duration            `yaml:"ttl"`
-	TTLOverrides     map[string]time.Duration `yaml:"ttl_overrides"`
-	MaxCacheEntries  int                      `yaml:"max_cache_entries"`
-	SocketPath       string                   `yaml:"socket_path"`
-	PIDFile          string                   `yaml:"pid_file"`
-	AutoStart        bool                     `yaml:"auto_start"`
-	AdditionalCache  []string                 `yaml:"additional_cacheable"`
-	DashboardPort    int                      `yaml:"dashboard_port"`
-	GHPath           string                   `yaml:"gh_path"`
-	LogLevel         string                   `yaml:"log_level"`
-	LogFile          string                   `yaml:"log_file"`
+	TTL             time.Duration            `yaml:"ttl"`
+	TTLOverrides    map[string]time.Duration `yaml:"ttl_overrides"`
+	MaxCacheEntries int                      `yaml:"max_cache_entries"`
+	SocketPath      string                   `yaml:"socket_path"`
+	PIDFile         string                   `yaml:"pid_file"`
+	AutoStart       bool                     `yaml:"auto_start"`
+	AdditionalCache []string                 `yaml:"additional_cacheable"`
+	DashboardPort   int                      `yaml:"dashboard_port"`
+	GHPath          string                   `yaml:"gh_path"`
+	LogLevel        string                   `yaml:"log_level"`
+	LogFile         string                   `yaml:"log_file"`
 }
 
 func DefaultConfig() *Config {

@@ -9,9 +9,9 @@ import (
 
 // Result holds the output of a gh command execution.
 type Result struct {
-	Stdout   []byte `json:"stdout"`
-	Stderr   []byte `json:"stderr"`
-	ExitCode int    `json:"exit_code"`
+	Stdout   []byte        `json:"stdout"`
+	Stderr   []byte        `json:"stderr"`
+	ExitCode int           `json:"exit_code"`
 	Duration time.Duration `json:"duration_ms"`
 }
 
