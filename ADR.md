@@ -1,5 +1,48 @@
 # Architecture Decision Records
 
+## ADR-000: Daemon/client architecture with allowlist-based caching
+
+**Date:** 2026-04-15
+**Status:** Accepted
+
+### Context
+
+Multiple AI agents (Copilot CLI, Claude Code, etc.) running in parallel frequently invoke the GitHub CLI (`gh`) to inspect PRs, issues, runs, and repository state. Each invocation makes one or more HTTP requests to the GitHub API, which enforces rate limits (5,000 requests/hour for authenticated users). With 5+ agents polling the same endpoints, rate limits are exhausted within minutes, causing failures and degraded workflows.
+
+### Decision
+
+Build a **two-binary daemon/client system** (`ghx` + `ghxd`) that acts as a caching proxy for `gh`:
+
+- **`ghx`** (client) — Drop-in replacement for `gh`. Resolves execution context (repo, branch, token), classifies the command, and sends it to the daemon over IPC. Falls back to direct `gh` execution if the daemon is unavailable.
+- **`ghxd`** (daemon) — Long-lived background process that receives commands, checks a local cache, executes `gh` on cache misses, and stores results. Serves a web dashboard for observability.
+
+### Key design choices
+
+**Allowlist, not denylist:** Only explicitly listed read-only commands are cached. Unknown commands pass through to `gh` unmodified. This is safer than trying to detect mutations — a missed mutation in a denylist would serve stale data after a state change.
+
+**Context-aware cache keys:** Keys are SHA-256 hashes of `host + repo + branch + token_hash + args`. The same command in different repos, branches, or auth contexts gets separate cache entries. This prevents cross-contamination in multi-repo workflows.
+
+**Singleflight coalescing:** When multiple agents request the same command simultaneously and it's a cache miss, only one `gh` execution occurs. All waiting clients receive the same result. This is the highest-value optimization for the multi-agent scenario.
+
+**Mutation-triggered invalidation:** Mutating commands (`pr create`, `issue close`, etc.) are detected and passed through to `gh`. They also flush all cache entries for the corresponding resource type and repository, ensuring subsequent reads see fresh data.
+
+**Auto-start daemon:** The client automatically starts the daemon on first invocation if it's not running. No manual setup required — `ghx` is truly a drop-in replacement.
+
+**Graceful degradation:** If the daemon crashes or is unavailable, `ghx` falls back to executing `gh` directly. The user never sees a failure caused by the caching layer itself.
+
+### Alternatives considered
+
+- **In-process caching (no daemon):** Each `ghx` invocation would maintain its own cache. Rejected because there's no shared state between agents — every agent would still make its own API calls, defeating the purpose.
+- **Shared file-based cache:** Write cached responses to disk, share via filesystem. Rejected due to file locking complexity, no singleflight coalescing, and race conditions between concurrent writers.
+- **HTTP-layer proxy:** Intercept at the network level. Rejected — see ADR-001.
+
+### Consequences
+
+- Requires two binaries (`ghx` and `ghxd`) instead of one
+- IPC transport is platform-specific (Unix sockets on macOS/Linux, named pipes on Windows)
+- New `gh` commands require allowlist updates to be cached (mitigated by `additional_cacheable` config)
+- Cache observability is built-in via the web dashboard, not bolted on after the fact
+
 ## ADR-001: Command-layer caching over HTTP-layer caching
 
 **Date:** 2026-04-15
