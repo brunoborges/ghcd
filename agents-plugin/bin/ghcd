@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# ghcd wrapper — lazily installs the ghcd daemon binary, then delegates to it.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DATA_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.ghcd-plugin}"
+BIN_DIR="$DATA_DIR/bin"
+
+# Use the installed binary if it exists
+if [ -x "$BIN_DIR/ghcd" ]; then
+  exec "$BIN_DIR/ghcd" "$@"
+fi
+
+# Attempt installation
+if "$PLUGIN_ROOT/scripts/install.sh" "$BIN_DIR" >&2; then
+  if [ -x "$BIN_DIR/ghcd" ]; then
+    exec "$BIN_DIR/ghcd" "$@"
+  fi
+fi
+
+echo "ghcd plugin: could not install ghcd" >&2
+exit 1
