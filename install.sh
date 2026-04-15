@@ -23,9 +23,9 @@ case "$ARCH" in
   *)             echo "Error: Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-# Get latest version
+# Get latest version (skip plugin-only releases)
 echo "Detecting latest version..."
-VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' | grep -v '^plugin-' | head -1)"
 if [ -z "$VERSION" ]; then
   echo "Error: Could not determine latest version"
   exit 1

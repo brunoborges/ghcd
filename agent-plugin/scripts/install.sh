@@ -31,8 +31,10 @@ esac
 # Determine version to install
 VERSION="${GHCD_VERSION:-latest}"
 if [ "$VERSION" = "latest" ]; then
-  VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null \
-    | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')" || true
+  # Find the latest non-plugin release (skip plugin-v* tags)
+  VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" 2>/dev/null \
+    | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' \
+    | grep -v '^plugin-' | head -1)" || true
 fi
 
 if [ -z "$VERSION" ]; then
