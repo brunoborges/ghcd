@@ -60,12 +60,12 @@ echo ""
 echo "✓ ghx  installed to ${INSTALL_DIR}/ghx"
 echo "✓ ghxd installed to ${INSTALL_DIR}/ghxd"
 
-# Install gh shim if no real gh is in PATH
-if ! command -v gh &>/dev/null; then
-  GH_SHIM='#!/bin/sh
+# Install gh shim alongside ghx
+GH_SHIM='#!/bin/sh
 # ghx-shim: this script redirects gh commands through ghx for caching
 exec ghx "$@"'
 
+install_shim() {
   if [ -w "$INSTALL_DIR" ]; then
     printf '%s\n' "$GH_SHIM" > "${INSTALL_DIR}/gh"
   else
@@ -74,11 +74,21 @@ exec ghx "$@"'
   fi
   chmod +x "${INSTALL_DIR}/gh"
   echo "✓ gh   shim installed to ${INSTALL_DIR}/gh (redirects to ghx)"
-  echo ""
-  echo "The gh shim lets you use 'gh' as usual — commands are cached via ghx."
-  echo "The real GitHub CLI will be downloaded automatically on first use."
+}
+
+if [ -f "${INSTALL_DIR}/gh" ]; then
+  if grep -q "ghx-shim" "${INSTALL_DIR}/gh" 2>/dev/null; then
+    # Existing shim — update it
+    install_shim
+  else
+    echo "⚠ Existing gh binary found at ${INSTALL_DIR}/gh — not overwriting"
+    echo "  All gh calls already benefit from caching when invoked as 'ghx' instead."
+    echo "  To route 'gh' through ghx, back up and replace it:"
+    echo "    mv ${INSTALL_DIR}/gh ${INSTALL_DIR}/gh.real"
+    echo "    printf '#!/bin/sh\\n# ghx-shim\\nexec ghx \"\$@\"\\n' > ${INSTALL_DIR}/gh && chmod +x ${INSTALL_DIR}/gh"
+  fi
 else
-  echo "ℹ gh   already found at $(command -v gh) (no shim installed)"
+  install_shim
 fi
 
 echo ""

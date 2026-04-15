@@ -62,7 +62,15 @@ mkdir -p "$INSTALL_DIR"
 cp "${TMPDIR}/ghx" "${TMPDIR}/ghxd" "$INSTALL_DIR/"
 chmod +x "$INSTALL_DIR/ghx" "$INSTALL_DIR/ghxd"
 
+# Install gh shim from tarball (if included) or generate it
+if [ -x "${TMPDIR}/gh" ]; then
+  cp "${TMPDIR}/gh" "$INSTALL_DIR/"
+else
+  printf '#!/bin/sh\n# ghx-shim: this script redirects gh commands through ghx for caching\nexec ghx "$@"\n' > "$INSTALL_DIR/gh"
+fi
+chmod +x "$INSTALL_DIR/gh"
+
 # Record installed version
 echo "$VERSION" > "$INSTALL_DIR/.ghx-version"
 
-echo "ghxd-install: installed ghx and ghxd ${VERSION} to ${INSTALL_DIR}" >&2
+echo "ghxd-install: installed ghx, ghxd, and gh shim ${VERSION} to ${INSTALL_DIR}" >&2

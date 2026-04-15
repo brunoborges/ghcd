@@ -52,7 +52,11 @@ jobs:
             GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghx" ./cmd/ghx
             GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghxd" ./cmd/ghxd
 
-            tar -czf "dist/ghx-${GOOS}-${GOARCH}.tar.gz" -C "${output}" ghx ghxd
+            # Include gh shim script in tarball
+            printf '#!/bin/sh\n# ghx-shim: this script redirects gh commands through ghx for caching\nexec ghx "$@"\n' > "${output}/gh"
+            chmod +x "${output}/gh"
+
+            tar -czf "dist/ghx-${GOOS}-${GOARCH}.tar.gz" -C "${output}" ghx ghxd gh
           done
 
       - name: Create GitHub Release
@@ -114,9 +118,23 @@ jobs:
               end
             end
 
+            conflicts_with "gh", because: "ghx includes a gh shim that routes all gh calls through the caching proxy"
+
             def install
               bin.install "ghx"
               bin.install "ghxd"
+              bin.install "gh"
+            end
+
+            def caveats
+              <<~EOS
+                ghx includes a 'gh' shim that routes all GitHub CLI calls through
+                the caching proxy. The real GitHub CLI will be auto-downloaded on
+                first use if not already present.
+
+                If you previously had 'gh' installed via Homebrew, ghx replaces it.
+                To revert: brew uninstall ghx && brew install gh
+              EOS
             end
 
             test do

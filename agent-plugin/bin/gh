@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# gh wrapper — routes all gh commands through ghx for caching.
+# Falls back to the real gh if ghx is unavailable.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Delegate to the co-located ghx wrapper (which lazy-installs the real binary)
+if [ -x "$SCRIPT_DIR/ghx" ]; then
+  exec "$SCRIPT_DIR/ghx" "$@"
+fi
+
+# Fallback: try ghx on PATH
+if command -v ghx &>/dev/null; then
+  exec ghx "$@"
+fi
+
+echo "ghx plugin: could not find ghx, falling back to system gh" >&2
+# Find the real gh (skip ourselves)
+SELF="$(cd "$(dirname "$0")" && pwd)/gh"
+for dir in $(echo "$PATH" | tr ':' '\n'); do
+  candidate="$dir/gh"
+  if [ -x "$candidate" ] && [ "$(cd "$(dirname "$candidate")" && pwd)/gh" != "$SELF" ]; then
+    exec "$candidate" "$@"
+  fi
+done
+
+echo "ghx plugin: no gh binary found" >&2
+exit 1
