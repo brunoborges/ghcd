@@ -16,7 +16,7 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 
 ## Install
 
-### Claude Code
+### Claude Code & GitHub Copilot CLI
 
 ```bash
 # Add the marketplace (one-time)
@@ -24,17 +24,6 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 
 # Install the plugin
 /plugin install ghcd@ghcd-plugins
-```
-
-### GitHub Copilot CLI
-
-```bash
-# Option 1: Via marketplace
-copilot plugin marketplace add brunoborges/ghcd-plugins
-copilot plugin install ghcd@ghcd-plugins
-
-# Option 2: Direct install (no marketplace needed)
-copilot plugin install brunoborges/ghcd:agents-plugin
 ```
 
 ### Local development / testing
