@@ -66,6 +66,27 @@ make build
 sudo cp bin/ghc bin/ghcd /usr/local/bin/
 ```
 
+### Agents Plugin (Claude Code & Copilot CLI)
+
+If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins), install the plugin and your agent will automatically prefer `ghc` over `gh`:
+
+```
+/plugin install ghcd
+```
+
+Or for local development / testing:
+
+```bash
+claude --plugin-dir ./agents-plugin
+```
+
+The plugin:
+- **Lazy-installs** `ghc` and `ghcd` binaries on first use
+- **Adds `ghc` to PATH** so agents use it automatically
+- **Includes a skill** that teaches agents to prefer `ghc` for all GitHub CLI calls
+
+See the [plugin README](agents-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghcd/releases) with the `plugin-v*` tag.
+
 ## Usage
 
 Use `ghc` exactly like `gh` — the daemon starts automatically on first use:
