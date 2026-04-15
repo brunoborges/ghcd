@@ -178,8 +178,9 @@ Only explicitly allowlisted read-only commands are cached:
 | `gh search repos/issues/prs` | ✅ |
 | `gh api` (GET only) | ✅ |
 | `gh label list` | ✅ |
-| `gh pr create/merge/close/edit` | ❌ (mutation → passthrough) |
-| `gh auth/config/codespace` | ❌ (passthrough) |
+| `gh pr create/merge/close/edit` | ❌ (mutation → invalidates PR cache) |
+| `gh issue create/edit/delete/close` | ❌ (mutation → invalidates issue cache) |
+| `gh auth/config/codespace/secret` | ❌ (always passthrough) |
 
 Mutations automatically invalidate related cache entries. For example, `gh pr merge 42` flushes all cached PR entries for that repo.
 
@@ -211,7 +212,7 @@ auto_start: true
 additional_cacheable:
   - "gh status"
 
-# Path to gh binary (auto-detected)
+# Path to gh binary (defaults to "gh" from PATH)
 # gh_path: /usr/local/bin/gh
 ```
 
