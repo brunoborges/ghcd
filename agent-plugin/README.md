@@ -23,7 +23,7 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 /plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghxd@agent-plugins
+/plugin install ghx@agent-plugins
 ```
 
 ### Local development / testing

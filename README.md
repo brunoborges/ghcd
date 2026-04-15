@@ -75,7 +75,7 @@ If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Cop
 /plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghxd@agent-plugins
+/plugin install ghx@agent-plugins
 ```
 
 > **Local development / testing:** `claude --plugin-dir ./agent-plugin`
