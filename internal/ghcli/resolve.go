@@ -8,11 +8,20 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
 // StalenessThreshold is how old a managed gh binary can be before a warning is shown.
 const StalenessThreshold = 30 * 24 * time.Hour // 30 days
+
+// ghBinaryName returns "gh.exe" on Windows, "gh" elsewhere.
+func ghBinaryName() string {
+	if runtime.GOOS == "windows" {
+		return "gh.exe"
+	}
+	return "gh"
+}
 
 // ResolveGHPath finds the real GitHub CLI (gh) binary.
 //
@@ -59,7 +68,7 @@ func ManagedGHPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".ghx", "bin", "gh")
+	return filepath.Join(home, ".ghx", "bin", ghBinaryName())
 }
 
 // IsManagedGH reports whether the resolved gh path points to the ghx-managed binary.
@@ -105,7 +114,7 @@ func FindRealGHInPath() string {
 	ghxPath := selfPath()
 
 	for _, dir := range filepath.SplitList(pathEnv) {
-		candidate := filepath.Join(dir, "gh")
+		candidate := filepath.Join(dir, ghBinaryName())
 		if !isExecutable(candidate) {
 			continue
 		}
@@ -137,5 +146,13 @@ func isExecutable(path string) bool {
 	if err != nil {
 		return false
 	}
-	return !info.IsDir() && info.Mode()&0111 != 0
+	if info.IsDir() {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// On Windows, permission bits are not meaningful.
+		// A regular file is considered executable.
+		return true
+	}
+	return info.Mode()&0111 != 0
 }

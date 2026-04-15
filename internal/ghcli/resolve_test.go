@@ -3,6 +3,7 @@ package ghcli
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -10,7 +11,7 @@ import (
 func TestResolveGHPath_UserOverride(t *testing.T) {
 	// Create a fake gh binary
 	dir := t.TempDir()
-	fakeGH := filepath.Join(dir, "my-gh")
+	fakeGH := filepath.Join(dir, ghBinaryName())
 	if err := os.WriteFile(fakeGH, []byte("#!/bin/sh\necho fake"), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +36,7 @@ func TestFindRealGHInPath_SkipsShim(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a shim script
-	shimPath := filepath.Join(dir, "gh")
+	shimPath := filepath.Join(dir, ghBinaryName())
 	if err := os.WriteFile(shimPath, []byte(ShimContent()), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +56,7 @@ func TestFindRealGHInPath_FindsReal(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a fake real gh binary (ELF header)
-	ghPath := filepath.Join(dir, "gh")
+	ghPath := filepath.Join(dir, ghBinaryName())
 	if err := os.WriteFile(ghPath, []byte{0x7f, 'E', 'L', 'F', 0, 0, 0, 0}, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -75,13 +76,13 @@ func TestFindRealGHInPath_PrefersRealOverShim(t *testing.T) {
 	realDir := t.TempDir()
 
 	// Shim in first PATH entry
-	shimPath := filepath.Join(shimDir, "gh")
+	shimPath := filepath.Join(shimDir, ghBinaryName())
 	if err := os.WriteFile(shimPath, []byte(ShimContent()), 0755); err != nil {
 		t.Fatal(err)
 	}
 
 	// Real binary in second PATH entry
-	realPath := filepath.Join(realDir, "gh")
+	realPath := filepath.Join(realDir, ghBinaryName())
 	if err := os.WriteFile(realPath, []byte{0x7f, 'E', 'L', 'F', 0, 0, 0, 0}, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -118,13 +119,15 @@ func TestIsExecutable(t *testing.T) {
 		t.Error("expected file with 0755 to be executable")
 	}
 
-	// Non-executable file
-	noExecFile := filepath.Join(dir, "noexec")
-	if err := os.WriteFile(noExecFile, []byte("x"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if isExecutable(noExecFile) {
-		t.Error("expected file with 0644 to NOT be executable")
+	if runtime.GOOS != "windows" {
+		// Non-executable file (permission bits not meaningful on Windows)
+		noExecFile := filepath.Join(dir, "noexec")
+		if err := os.WriteFile(noExecFile, []byte("x"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		if isExecutable(noExecFile) {
+			t.Error("expected file with 0644 to NOT be executable")
+		}
 	}
 
 	// Nonexistent
