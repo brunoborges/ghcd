@@ -20,10 +20,10 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 
 ```bash
 # Add the marketplace (one-time)
-/plugin marketplace add brunoborges/ghcd-plugins
+/plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghcd@ghcd-plugins
+/plugin install ghcd@agent-plugins
 ```
 
 ### Local development / testing

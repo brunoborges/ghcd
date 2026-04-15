@@ -72,10 +72,10 @@ If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Cop
 
 ```bash
 # Add the marketplace (one-time)
-/plugin marketplace add brunoborges/ghcd-plugins
+/plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghcd@ghcd-plugins
+/plugin install ghcd@agent-plugins
 ```
 
 > **Local development / testing:** `claude --plugin-dir ./agents-plugin`
