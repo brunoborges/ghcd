@@ -169,8 +169,8 @@ func (s *Server) startHTTP() {
 	})
 
 	mux.HandleFunc("/api/log", func(w http.ResponseWriter, r *http.Request) {
-		const maxLogLimit = 1000
-		limit := 200
+		const maxLogLimit = 200
+		limit := maxLogLimit
 		if v := r.URL.Query().Get("limit"); v != "" {
 			if n, err := strconv.Atoi(v); err == nil && n > 0 {
 				if n > maxLogLimit {
