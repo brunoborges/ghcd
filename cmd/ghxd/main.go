@@ -7,6 +7,7 @@ import (
 
 	"github.com/brunoborges/ghx/internal/config"
 	"github.com/brunoborges/ghx/internal/daemon"
+	"github.com/brunoborges/ghx/internal/ghcli"
 )
 
 var version = "dev"
@@ -43,6 +44,13 @@ func main() {
 		fmt.Println("The daemon is typically managed via: ghx xdaemon start|stop|status|restart")
 		os.Exit(0)
 	}
+
+	// Resolve real gh binary before starting the server
+	resolved, err := ghcli.ResolveGHPath(cfg.GHPath)
+	if err != nil {
+		log.Fatalf("fatal: cannot find GitHub CLI (gh): %v", err)
+	}
+	cfg.GHPath = resolved
 
 	srv := daemon.NewServer(cfg, version)
 	if err := srv.Run(); err != nil {

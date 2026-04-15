@@ -13,6 +13,7 @@ import (
 	"github.com/brunoborges/ghx/internal/client"
 	"github.com/brunoborges/ghx/internal/config"
 	execctx "github.com/brunoborges/ghx/internal/context"
+	"github.com/brunoborges/ghx/internal/ghcli"
 	"github.com/brunoborges/ghx/internal/protocol"
 )
 
@@ -26,6 +27,7 @@ func main() {
 
 	args := os.Args[1:]
 	if len(args) == 0 {
+		mustResolveGH(cfg)
 		execDirect(cfg.GHPath, nil)
 		return
 	}
@@ -50,6 +52,7 @@ func main() {
 		fmt.Println("  xhelp         Show this help")
 		fmt.Println("  xdaemon       Manage the ghxd daemon (start|stop|status|restart)")
 		fmt.Println("  xcache        Manage the cache (stats|flush|keys)")
+		fmt.Println("  ghcli         Manage the GitHub CLI binary (status|upgrade)")
 		fmt.Println()
 		fmt.Println("All other arguments are forwarded to gh via the caching daemon.")
 		fmt.Printf("Config: ~/.ghx/\n")
@@ -60,6 +63,9 @@ func main() {
 		return
 	case "xcache":
 		handleCache(cfg, args[1:])
+		return
+	case "ghcli":
+		handleGH(cfg, args[1:])
 		return
 	}
 
@@ -86,9 +92,13 @@ func main() {
 	}
 
 	if len(ghArgs) == 0 {
+		mustResolveGH(cfg)
 		execDirect(cfg.GHPath, nil)
 		return
 	}
+
+	// Resolve real gh binary (lazy — only on execution path)
+	mustResolveGH(cfg)
 
 	// Resolve execution context
 	ctx := execctx.Resolve(cfg.GHPath)
@@ -351,4 +361,87 @@ func execDirect(ghPath string, args []string) {
 	}
 	allArgs := append([]string{ghPath}, args...)
 	syscall.Exec(path, allArgs, os.Environ())
+}
+
+// mustResolveGH resolves the real gh binary path, updating cfg.GHPath.
+// Exits with an error if gh cannot be found or downloaded.
+// Also checks staleness for managed binaries.
+func mustResolveGH(cfg *config.Config) {
+	resolved, err := ghcli.ResolveGHPath(cfg.GHPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
+		os.Exit(1)
+	}
+	cfg.GHPath = resolved
+	ghcli.CheckStaleness(resolved)
+}
+
+func handleGH(cfg *config.Config, args []string) {
+	if len(args) == 0 {
+		fmt.Println("Usage: ghx ghcli <status|upgrade>")
+		fmt.Println()
+		fmt.Println("  status    Show which gh binary is in use and its version")
+		fmt.Println("  upgrade   Download the latest GitHub CLI to ~/.ghx/bin/gh")
+		os.Exit(1)
+	}
+
+	switch args[0] {
+	case "status":
+		handleGHStatus(cfg)
+	case "upgrade":
+		handleGHUpgrade()
+	default:
+		fmt.Fprintf(os.Stderr, "ghx: unknown ghcli command: %s\n", args[0])
+		os.Exit(1)
+	}
+}
+
+func handleGHStatus(cfg *config.Config) {
+	resolved, err := ghcli.ResolveGHPath(cfg.GHPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
+		os.Exit(1)
+	}
+
+	managed := ghcli.IsManagedGH(resolved)
+	source := "PATH"
+	if cfg.GHPath != "" && cfg.GHPath != "gh" {
+		source = "config (gh_path)"
+	} else if managed {
+		source = "managed (~/.ghx/bin/gh)"
+	}
+
+	fmt.Printf("gh binary:  %s\n", resolved)
+	fmt.Printf("source:     %s\n", source)
+
+	ver, err := ghcli.InstalledVersion(resolved)
+	if err != nil {
+		fmt.Printf("version:    unknown (%v)\n", err)
+	} else {
+		fmt.Printf("version:    %s\n", ver)
+	}
+
+	if managed {
+		info, err := os.Stat(resolved)
+		if err == nil {
+			age := time.Since(info.ModTime())
+			days := int(age.Hours() / 24)
+			fmt.Printf("installed:  %d days ago\n", days)
+		}
+	}
+}
+
+func handleGHUpgrade() {
+	managed := ghcli.ManagedGHPath()
+	if managed == "" {
+		fmt.Fprintf(os.Stderr, "ghx: cannot determine managed gh path\n")
+		os.Exit(1)
+	}
+
+	ver, err := ghcli.Upgrade(managed)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ghx: upgrade failed: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("ghx: GitHub CLI upgraded to v%s\n", ver)
 }

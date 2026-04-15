@@ -16,6 +16,7 @@ A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that elimin
 - 🧹 **Auto-invalidation** — mutations flush related cache entries
 - 📊 **Web dashboard** — real-time hit rates, per-command stats, request log
 - 🔌 **Drop-in replacement** — just use `ghx` instead of `gh`
+- 📦 **No `gh` required** — auto-downloads GitHub CLI on first use if not installed
 
 ## Install
 
@@ -32,7 +33,7 @@ brew install ghxd
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
 ```
 
-This detects your OS and architecture, downloads the latest release, and installs `ghx` and `ghxd` to `/usr/local/bin`. To install elsewhere:
+This detects your OS and architecture, downloads the latest release, and installs `ghx` and `ghxd` to `/usr/local/bin`. If the GitHub CLI (`gh`) is not already installed, a lightweight shim is also installed that redirects `gh` commands through `ghx`. To install elsewhere:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | INSTALL_DIR=~/.local/bin bash
@@ -86,6 +87,84 @@ The plugin:
 - **Includes a skill** that teaches agents to prefer `ghx` for all GitHub CLI calls
 
 See the [plugin README](agent-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghx/releases) with the `plugin-v*` tag.
+
+## Using ghx Without Installing GitHub CLI
+
+You don't need to install the GitHub CLI (`gh`) separately. When `ghx` needs the real `gh` binary and can't find one, it **automatically downloads** the latest release from [cli/cli](https://github.com/cli/cli/releases) to `~/.ghx/bin/gh`.
+
+### How it works
+
+When `ghx` or `ghxd` needs to execute a `gh` command, it resolves the real binary using this order:
+
+1. **User override** — if `gh_path` is set in `~/.ghx/config.yaml` or via `GHX_GH_PATH` env var, use that path directly
+2. **PATH scan** — search `PATH` for a real `gh` binary (skipping ghx shims)
+3. **Managed location** — check `~/.ghx/bin/gh` (previously auto-downloaded)
+4. **Auto-download** — download the latest GitHub CLI from [cli/cli releases](https://github.com/cli/cli/releases) to `~/.ghx/bin/gh`
+
+The download includes **SHA-256 checksum verification** against the official release checksums.
+
+### The `gh` shim
+
+When you install ghx via the install script and `gh` is not already installed, a lightweight shim script is placed at the same location as `ghx` (e.g., `/usr/local/bin/gh`). This shim simply redirects all `gh` commands through `ghx`:
+
+```sh
+#!/bin/sh
+# ghx-shim: this script redirects gh commands through ghx for caching
+exec ghx "$@"
+```
+
+This means existing tools, scripts, and CI workflows that call `gh` will automatically benefit from caching — no changes needed. The shim is **only installed if no real `gh` is found** in `PATH` at install time.
+
+### Example first-run experience
+
+```
+$ ghx pr list
+ghx: GitHub CLI (gh) not found, downloading...
+ghx: downloading GitHub CLI v2.74.0...
+ghx: GitHub CLI v2.74.0 installed to /Users/you/.ghx/bin/gh
+#1  My first PR  (main <- feature-branch)
+```
+
+Subsequent runs use the cached `gh` binary at `~/.ghx/bin/gh` — no re-download.
+
+### Overriding the `gh` binary path
+
+If you have `gh` installed in a non-standard location, point `ghx` at it:
+
+```yaml
+# ~/.ghx/config.yaml
+gh_path: /opt/homebrew/bin/gh
+```
+
+Or via environment variable:
+
+```bash
+export GHX_GH_PATH=/opt/homebrew/bin/gh
+```
+
+### Updating the managed `gh` binary
+
+When `ghx` auto-downloads `gh`, the binary is stored at `~/.ghx/bin/gh`. To upgrade it to the latest release:
+
+```bash
+ghx ghcli upgrade
+```
+
+If the managed binary is more than 30 days old, `ghx` prints a one-line reminder:
+
+```
+ghx: managed gh binary is 45 days old — run 'ghx ghcli upgrade' to update
+```
+
+To check which `gh` binary is in use:
+
+```bash
+$ ghx ghcli status
+gh binary:  /Users/you/.ghx/bin/gh
+source:     managed (~/.ghx/bin/gh)
+version:    2.74.0
+installed:  3 days ago
+```
 
 ## Usage
 
@@ -251,7 +330,8 @@ auto_start: true
 additional_cacheable:
   - "gh status"
 
-# Path to gh binary (defaults to "gh" from PATH)
+# Path to gh binary (default: auto-resolved)
+# Resolution order: this setting → PATH → ~/.ghx/bin/gh → auto-download
 # gh_path: /usr/local/bin/gh
 ```
 
@@ -286,6 +366,7 @@ additional_cacheable:
 - **Singleflight** — concurrent identical requests share a single `gh` execution
 - **Coarse invalidation** — mutations flush the entire resource namespace (all PR cache for that repo)
 - **Graceful fallback** — if daemon is down or fails, `ghx` runs `gh` directly
+- **Self-contained** — auto-downloads `gh` if not installed; no external dependencies beyond a network connection
 
 ## Security
 
