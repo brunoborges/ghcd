@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/allowlist"
+	"github.com/brunoborges/ghx/internal/allowlist"
 )
 
 // Entry is a cached response.

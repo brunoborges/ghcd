@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ghcd installer — downloads the latest release from GitHub
-# Usage: curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | bash
+# ghxd installer — downloads the latest release from GitHub
+# Usage: curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
 
-REPO="brunoborges/ghcd"
+REPO="brunoborges/ghx"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 # Detect OS
@@ -33,7 +33,7 @@ fi
 echo "Latest version: $VERSION"
 
 # Download
-TARBALL="ghcd-${OS}-${ARCH}.tar.gz"
+TARBALL="ghx-${OS}-${ARCH}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${VERSION}/${TARBALL}"
 
 TMPDIR="$(mktemp -d)"
@@ -48,16 +48,16 @@ tar -xzf "${TMPDIR}/${TARBALL}" -C "$TMPDIR"
 # Install
 echo "Installing to ${INSTALL_DIR}..."
 if [ -w "$INSTALL_DIR" ]; then
-  cp "${TMPDIR}/ghc" "${TMPDIR}/ghcd" "$INSTALL_DIR/"
+  cp "${TMPDIR}/ghx" "${TMPDIR}/ghxd" "$INSTALL_DIR/"
 else
   echo "(requires sudo)"
-  sudo cp "${TMPDIR}/ghc" "${TMPDIR}/ghcd" "$INSTALL_DIR/"
+  sudo cp "${TMPDIR}/ghx" "${TMPDIR}/ghxd" "$INSTALL_DIR/"
 fi
 
-chmod +x "${INSTALL_DIR}/ghc" "${INSTALL_DIR}/ghcd"
+chmod +x "${INSTALL_DIR}/ghx" "${INSTALL_DIR}/ghxd"
 
 echo ""
-echo "✓ ghc  installed to ${INSTALL_DIR}/ghc"
-echo "✓ ghcd installed to ${INSTALL_DIR}/ghcd"
+echo "✓ ghx  installed to ${INSTALL_DIR}/ghx"
+echo "✓ ghxd installed to ${INSTALL_DIR}/ghxd"
 echo ""
-echo "Run 'ghc --help' to get started, or just use 'ghc' instead of 'gh'."
+echo "Run 'ghx --help' to get started, or just use 'ghx' instead of 'gh'."

@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/brunoborges/ghcd/internal/config"
-	"github.com/brunoborges/ghcd/internal/daemon"
+	"github.com/brunoborges/ghx/internal/config"
+	"github.com/brunoborges/ghx/internal/daemon"
 )
 
 func main() {
@@ -16,13 +16,13 @@ func main() {
 	}
 
 	// Setup logging
-	log.SetPrefix("ghcd: ")
+	log.SetPrefix("ghxd: ")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmsgprefix)
 
 	if len(os.Args) > 1 && os.Args[1] == "--help" {
-		fmt.Println("ghcd — GitHub CLI Cache Proxy Daemon")
+		fmt.Println("ghxd — GitHub CLI Cache Proxy Daemon")
 		fmt.Println()
-		fmt.Println("Usage: ghcd [--help]")
+		fmt.Println("Usage: ghxd [--help]")
 		fmt.Println()
 		fmt.Printf("  Socket:    %s\n", cfg.SocketPath)
 		fmt.Printf("  Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)

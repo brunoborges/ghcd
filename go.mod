@@ -1,4 +1,4 @@
-module github.com/brunoborges/ghcd
+module github.com/brunoborges/ghx
 
 go 1.26.2
 

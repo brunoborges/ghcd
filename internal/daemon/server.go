@@ -15,15 +15,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/allowlist"
-	"github.com/brunoborges/ghcd/internal/cache"
-	"github.com/brunoborges/ghcd/internal/config"
-	"github.com/brunoborges/ghcd/internal/dashboard"
-	"github.com/brunoborges/ghcd/internal/metrics"
-	"github.com/brunoborges/ghcd/internal/protocol"
+	"github.com/brunoborges/ghx/internal/allowlist"
+	"github.com/brunoborges/ghx/internal/cache"
+	"github.com/brunoborges/ghx/internal/config"
+	"github.com/brunoborges/ghx/internal/dashboard"
+	"github.com/brunoborges/ghx/internal/metrics"
+	"github.com/brunoborges/ghx/internal/protocol"
 )
 
-// Server is the ghcd daemon.
+// Server is the ghxd daemon.
 type Server struct {
 	cfg     *config.Config
 	cache   *cache.Cache
@@ -98,7 +98,7 @@ func (s *Server) Run() error {
 		}
 	}()
 
-	log.Printf("ghcd started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", s.cfg.SocketPath, s.cfg.DashboardPort)
+	log.Printf("ghxd started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", s.cfg.SocketPath, s.cfg.DashboardPort)
 
 	// Accept connections
 	for {
@@ -215,7 +215,7 @@ func (s *Server) Shutdown() {
 		s.ln.Close()
 	}
 
-	log.Println("ghcd shutdown complete")
+	log.Println("ghxd shutdown complete")
 }
 
 func (s *Server) writePIDFile() error {

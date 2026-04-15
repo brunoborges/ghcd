@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/protocol"
+	"github.com/brunoborges/ghx/internal/protocol"
 )
 
-// Client communicates with the ghcd daemon over a Unix socket.
+// Client communicates with the ghxd daemon over a Unix socket.
 type Client struct {
 	socketPath string
 	timeout    time.Duration

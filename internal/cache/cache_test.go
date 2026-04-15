@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/allowlist"
+	"github.com/brunoborges/ghx/internal/allowlist"
 )
 
 func TestGetSetBasic(t *testing.T) {

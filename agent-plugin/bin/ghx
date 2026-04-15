@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# ghc wrapper — lazily installs the ghc binary, then delegates to it.
+# ghx wrapper — lazily installs the ghx binary, then delegates to it.
 # Placed in the plugin's bin/ directory so it is automatically on PATH.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-DATA_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.ghcd-plugin}"
+DATA_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.ghx-plugin}"
 BIN_DIR="$DATA_DIR/bin"
 
 # Use the installed binary if it exists
-if [ -x "$BIN_DIR/ghc" ]; then
-  exec "$BIN_DIR/ghc" "$@"
+if [ -x "$BIN_DIR/ghx" ]; then
+  exec "$BIN_DIR/ghx" "$@"
 fi
 
 # Attempt installation
 if "$PLUGIN_ROOT/scripts/install.sh" "$BIN_DIR" >&2; then
-  if [ -x "$BIN_DIR/ghc" ]; then
-    exec "$BIN_DIR/ghc" "$@"
+  if [ -x "$BIN_DIR/ghx" ]; then
+    exec "$BIN_DIR/ghx" "$@"
   fi
 fi
 
-# Fallback: run gh directly (ghc is a drop-in replacement)
-echo "ghcd plugin: could not install ghc, falling back to gh" >&2
+# Fallback: run gh directly (ghx is a drop-in replacement)
+echo "ghxd plugin: could not install ghx, falling back to gh" >&2
 exec gh "$@"

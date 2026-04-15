@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	execctx "github.com/brunoborges/ghcd/internal/context"
+	execctx "github.com/brunoborges/ghx/internal/context"
 )
 
-// Request is sent from the ghc client to the ghcd daemon.
+// Request is sent from the ghx client to the ghxd daemon.
 type Request struct {
 	// Args are the gh command arguments (everything after "gh").
 	Args []string `json:"args"`
@@ -37,7 +37,7 @@ const (
 	TypeShutdown   RequestType = "shutdown"   // Graceful shutdown
 )
 
-// Response is sent from the ghcd daemon to the ghc client.
+// Response is sent from the ghxd daemon to the ghx client.
 type Response struct {
 	Stdout   []byte `json:"stdout,omitempty"`
 	Stderr   []byte `json:"stderr,omitempty"`

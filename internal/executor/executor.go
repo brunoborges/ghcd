@@ -38,7 +38,7 @@ func Execute(ctx context.Context, ghPath string, args []string) *Result {
 			result.ExitCode = exitErr.ExitCode()
 		} else {
 			result.ExitCode = 1
-			result.Stderr = append(result.Stderr, []byte("\nghc: "+err.Error())...)
+			result.Stderr = append(result.Stderr, []byte("\nghx: "+err.Error())...)
 		}
 	}
 
@@ -54,7 +54,7 @@ func ExecutePassthrough(ghPath string, args []string) int {
 	cmd.Stderr = nil
 
 	// For passthrough, we connect to the calling process's stdio
-	// This is only used when ghc falls back to direct execution
+	// This is only used when ghx falls back to direct execution
 	cmd.Stdin = nil
 
 	if err := cmd.Run(); err != nil {

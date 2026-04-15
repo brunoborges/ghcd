@@ -10,16 +10,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/client"
-	"github.com/brunoborges/ghcd/internal/config"
-	execctx "github.com/brunoborges/ghcd/internal/context"
-	"github.com/brunoborges/ghcd/internal/protocol"
+	"github.com/brunoborges/ghx/internal/client"
+	"github.com/brunoborges/ghx/internal/config"
+	execctx "github.com/brunoborges/ghx/internal/context"
+	"github.com/brunoborges/ghx/internal/protocol"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ghc: warning: config load: %v\n", err)
+		fmt.Fprintf(os.Stderr, "ghx: warning: config load: %v\n", err)
 	}
 
 	args := os.Args[1:]
@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	// Handle ghc-specific subcommands
+	// Handle ghx-specific subcommands
 	switch args[0] {
 	case "daemon":
 		handleDaemon(cfg, args[1:])
@@ -38,8 +38,8 @@ func main() {
 		return
 	}
 
-	// Parse ghc flags (before the gh args)
-	noCache := os.Getenv("GHC_NO_CACHE") == "1"
+	// Parse ghx flags (before the gh args)
+	noCache := os.Getenv("GHX_NO_CACHE") == "1"
 	ttlOverride := 0
 	var ghArgs []string
 
@@ -75,7 +75,7 @@ func main() {
 	if !cl.IsRunning() {
 		if cfg.AutoStart {
 			if err := startDaemon(cfg); err != nil {
-				fmt.Fprintf(os.Stderr, "ghc: daemon auto-start failed: %v (falling back to direct gh)\n", err)
+				fmt.Fprintf(os.Stderr, "ghx: daemon auto-start failed: %v (falling back to direct gh)\n", err)
 				execDirect(cfg.GHPath, ghArgs)
 				return
 			}
@@ -87,7 +87,7 @@ func main() {
 				time.Sleep(100 * time.Millisecond)
 			}
 			if !cl.IsRunning() {
-				fmt.Fprintf(os.Stderr, "ghc: daemon failed to start in time (falling back to direct gh)\n")
+				fmt.Fprintf(os.Stderr, "ghx: daemon failed to start in time (falling back to direct gh)\n")
 				execDirect(cfg.GHPath, ghArgs)
 				return
 			}
@@ -108,7 +108,7 @@ func main() {
 
 	resp, err := cl.Send(req)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ghc: daemon error: %v (falling back to direct gh)\n", err)
+		fmt.Fprintf(os.Stderr, "ghx: daemon error: %v (falling back to direct gh)\n", err)
 		execDirect(cfg.GHPath, ghArgs)
 		return
 	}
@@ -124,7 +124,7 @@ func main() {
 
 func handleDaemon(cfg *config.Config, args []string) {
 	if len(args) == 0 {
-		fmt.Println("Usage: ghc daemon <start|stop|status|restart>")
+		fmt.Println("Usage: ghx daemon <start|stop|status|restart>")
 		os.Exit(1)
 	}
 
@@ -138,29 +138,29 @@ func handleDaemon(cfg *config.Config, args []string) {
 		}
 		if detach {
 			if err := startDaemon(cfg); err != nil {
-				fmt.Fprintf(os.Stderr, "ghc: failed to start daemon: %v\n", err)
+				fmt.Fprintf(os.Stderr, "ghx: failed to start daemon: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("ghc: daemon started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", cfg.SocketPath, cfg.DashboardPort)
+			fmt.Printf("ghx: daemon started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", cfg.SocketPath, cfg.DashboardPort)
 		} else {
 			// Foreground mode — exec the daemon directly
-			ghcdPath, err := findGHCD()
+			ghxdPath, err := findGHCD()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "ghc: %v\n", err)
+				fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 				os.Exit(1)
 			}
-			syscall.Exec(ghcdPath, []string{"ghcd"}, os.Environ())
+			syscall.Exec(ghxdPath, []string{"ghxd"}, os.Environ())
 		}
 
 	case "stop":
 		cl := client.New(cfg.SocketPath)
 		if !cl.IsRunning() {
-			fmt.Println("ghc: daemon is not running")
+			fmt.Println("ghx: daemon is not running")
 			return
 		}
 		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeShutdown})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ghc: stop failed: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ghx: stop failed: %v\n", err)
 			os.Exit(1)
 		}
 		os.Stdout.Write(resp.Stdout)
@@ -168,12 +168,12 @@ func handleDaemon(cfg *config.Config, args []string) {
 	case "status":
 		cl := client.New(cfg.SocketPath)
 		if !cl.IsRunning() {
-			fmt.Println("ghc: daemon is not running")
+			fmt.Println("ghx: daemon is not running")
 			os.Exit(1)
 		}
 		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeStats})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ghc: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 			os.Exit(1)
 		}
 		printFormattedStats(resp.Stdout)
@@ -184,20 +184,20 @@ func handleDaemon(cfg *config.Config, args []string) {
 		handleDaemon(cfg, []string{"start", "-d"})
 
 	default:
-		fmt.Fprintf(os.Stderr, "ghc: unknown daemon command: %s\n", args[0])
+		fmt.Fprintf(os.Stderr, "ghx: unknown daemon command: %s\n", args[0])
 		os.Exit(1)
 	}
 }
 
 func handleCache(cfg *config.Config, args []string) {
 	if len(args) == 0 {
-		fmt.Println("Usage: ghc cache <stats|flush|keys>")
+		fmt.Println("Usage: ghx cache <stats|flush|keys>")
 		os.Exit(1)
 	}
 
 	cl := client.New(cfg.SocketPath)
 	if !cl.IsRunning() {
-		fmt.Println("ghc: daemon is not running")
+		fmt.Println("ghx: daemon is not running")
 		os.Exit(1)
 	}
 
@@ -205,7 +205,7 @@ func handleCache(cfg *config.Config, args []string) {
 	case "stats":
 		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeStats})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ghc: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 			os.Exit(1)
 		}
 		printFormattedStats(resp.Stdout)
@@ -214,7 +214,7 @@ func handleCache(cfg *config.Config, args []string) {
 		flushArgs := args[1:]
 		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeFlush, Args: flushArgs})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ghc: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 			os.Exit(1)
 		}
 		os.Stdout.Write(resp.Stdout)
@@ -222,7 +222,7 @@ func handleCache(cfg *config.Config, args []string) {
 	case "keys":
 		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeKeys})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ghc: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 			os.Exit(1)
 		}
 		var keys []string
@@ -232,7 +232,7 @@ func handleCache(cfg *config.Config, args []string) {
 		}
 
 	default:
-		fmt.Fprintf(os.Stderr, "ghc: unknown cache command: %s\n", args[0])
+		fmt.Fprintf(os.Stderr, "ghx: unknown cache command: %s\n", args[0])
 		os.Exit(1)
 	}
 }
@@ -282,14 +282,14 @@ func printFormattedStats(data []byte) {
 	}
 }
 
-// startDaemon launches ghcd as a background process.
+// startDaemon launches ghxd as a background process.
 func startDaemon(cfg *config.Config) error {
-	ghcdPath, err := findGHCD()
+	ghxdPath, err := findGHCD()
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command(ghcdPath)
+	cmd := exec.Command(ghxdPath)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
@@ -297,22 +297,22 @@ func startDaemon(cfg *config.Config) error {
 	return cmd.Start()
 }
 
-// findGHCD locates the ghcd binary.
+// findGHCD locates the ghxd binary.
 func findGHCD() (string, error) {
-	// Check next to the ghc binary
+	// Check next to the ghx binary
 	exe, err := os.Executable()
 	if err == nil {
 		dir := exe[:strings.LastIndex(exe, "/")+1]
-		candidate := dir + "ghcd"
+		candidate := dir + "ghxd"
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate, nil
 		}
 	}
 
 	// Check PATH
-	path, err := exec.LookPath("ghcd")
+	path, err := exec.LookPath("ghxd")
 	if err != nil {
-		return "", fmt.Errorf("ghcd not found (install it next to ghc or in PATH)")
+		return "", fmt.Errorf("ghxd not found (install it next to ghx or in PATH)")
 	}
 	return path, nil
 }
@@ -321,7 +321,7 @@ func findGHCD() (string, error) {
 func execDirect(ghPath string, args []string) {
 	path, err := exec.LookPath(ghPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ghc: gh not found: %v\n", err)
+		fmt.Fprintf(os.Stderr, "ghx: gh not found: %v\n", err)
 		os.Exit(1)
 	}
 	allArgs := append([]string{ghPath}, args...)

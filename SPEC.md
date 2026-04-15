@@ -1,4 +1,4 @@
-# ghc — GitHub CLI Cache Proxy
+# ghx — GitHub CLI Cache Proxy
 
 ## Problem
 
@@ -6,10 +6,10 @@ The GitHub CLI (`gh`) has no client-side caching. When multiple AI agents (Copil
 
 ## Solution
 
-**ghc** is a caching proxy for the `gh` CLI, consisting of:
+**ghx** is a caching proxy for the `gh` CLI, consisting of:
 
-- **`ghcd`** — a background daemon that executes `gh` commands, caches results, and serves cached responses
-- **`ghc`** — a thin CLI client that forwards commands to the daemon and returns results
+- **`ghxd`** — a background daemon that executes `gh` commands, caches results, and serves cached responses
+- **`ghx`** — a thin CLI client that forwards commands to the daemon and returns results
 
 The system uses an **allowlist** of known-safe read-only commands, **request coalescing** to prevent duplicate in-flight calls, and a **configurable TTL** (default: 30s). Commands not on the allowlist are passed through directly to `gh` without caching.
 
@@ -18,13 +18,13 @@ The system uses an **allowlist** of known-safe read-only commands, **request coa
 ```
 ┌─────────┐  ┌─────────┐  ┌─────────┐
 │ Agent 1 │  │ Agent 2 │  │ Agent 3 │
-│ (ghc)   │  │ (ghc)   │  │ (ghc)   │
+│ (ghx)   │  │ (ghx)   │  │ (ghx)   │
 └────┬────┘  └────┬────┘  └────┬────┘
      │            │            │
      └────────────┼────────────┘
                   │ Unix Domain Socket
            ┌──────┴──────┐
-           │    ghcd     │
+           │    ghxd     │
            │  (daemon)   │
            ├─────────────┤
            │ Cache Store │  (in-memory, LRU)
@@ -59,7 +59,7 @@ CacheKey = hash(
 )
 ```
 
-**Context resolution**: The client (`ghc`) resolves the execution context before sending to the daemon:
+**Context resolution**: The client (`ghx`) resolves the execution context before sending to the daemon:
 - Repo: `git remote get-url origin` or `GH_REPO` env var
 - Branch: `git symbolic-ref --short HEAD`
 - Host: `GH_HOST` env var or default from `gh` config
@@ -107,7 +107,7 @@ Only explicitly allowlisted commands are cached. Everything else passes through 
 | `gh ruleset check`           |                                          |
 | `gh org list`                |                                          |
 
-The allowlist is configurable — users can add custom commands via `additional_cacheable` in `~/.ghc/config.yaml`.
+The allowlist is configurable — users can add custom commands via `additional_cacheable` in `~/.ghx/config.yaml`.
 
 ### Commands That Are NEVER Cached
 
@@ -124,9 +124,9 @@ These commands are **passed through directly** to `gh` with no daemon involvemen
 When multiple clients request the same cache key simultaneously and it's a miss, only **one** `gh` execution occurs. All waiting clients receive the same result. This is critical for the multi-agent scenario where 5+ agents may request the same PR list within milliseconds.
 
 ```
-Agent1 → ghcd: "gh pr list" (cache miss, starts gh execution)
-Agent2 → ghcd: "gh pr list" (same key, joins in-flight request)
-Agent3 → ghcd: "gh pr list" (same key, joins in-flight request)
+Agent1 → ghxd: "gh pr list" (cache miss, starts gh execution)
+Agent2 → ghxd: "gh pr list" (same key, joins in-flight request)
+Agent3 → ghxd: "gh pr list" (same key, joins in-flight request)
            ↓
        gh pr list  ← single execution
            ↓
@@ -170,58 +170,58 @@ The client reproduces the exact observed behavior: writing stdout, stderr, and r
 gh pr list --repo owner/repo --json number,title
 
 # Use:
-ghc pr list --repo owner/repo --json number,title
+ghx pr list --repo owner/repo --json number,title
 ```
 
 ### Daemon Management
 
 ```bash
-ghc daemon start          # Start daemon (foreground, for debugging)
-ghc daemon start -d       # Start daemon (background, detached)
-ghc daemon stop           # Graceful shutdown
-ghc daemon status         # Show PID, uptime, cache stats summary
-ghc daemon restart        # Stop + start
+ghx daemon start          # Start daemon (foreground, for debugging)
+ghx daemon start -d       # Start daemon (background, detached)
+ghx daemon stop           # Graceful shutdown
+ghx daemon status         # Show PID, uptime, cache stats summary
+ghx daemon restart        # Stop + start
 ```
 
 ### Cache Management
 
 ```bash
-ghc cache flush           # Flush all cached entries
-ghc cache flush pr        # Flush all PR-related entries
-ghc cache flush --repo owner/repo  # Flush entries for a specific repo
-ghc cache stats           # Show hit rate, per-command breakdown
-ghc cache keys            # List currently cached keys (for debugging)
+ghx cache flush           # Flush all cached entries
+ghx cache flush pr        # Flush all PR-related entries
+ghx cache flush --repo owner/repo  # Flush entries for a specific repo
+ghx cache stats           # Show hit rate, per-command breakdown
+ghx cache keys            # List currently cached keys (for debugging)
 ```
 
 ### Configuration
 
 ```bash
-ghc config set ttl 60             # Set default TTL to 60 seconds
-ghc config set ttl.pr.list 120    # Per-command TTL override
-ghc config set max-cache-size 500 # Max cached entries (LRU eviction)
-ghc config set dashboard.port 9876
-ghc config get ttl
-ghc config list
+ghx config set ttl 60             # Set default TTL to 60 seconds
+ghx config set ttl.pr.list 120    # Per-command TTL override
+ghx config set max-cache-size 500 # Max cached entries (LRU eviction)
+ghx config set dashboard.port 9876
+ghx config get ttl
+ghx config list
 ```
 
 ### Per-Command Overrides
 
 ```bash
-ghc --no-cache pr list            # Bypass cache for this call
-ghc --ttl 120 pr list             # Override TTL for this call
-GHC_TTL=120 ghc pr list           # Same, via env var
-GHC_NO_CACHE=1 ghc pr list        # Same as --no-cache, via env var
+ghx --no-cache pr list            # Bypass cache for this call
+ghx --ttl 120 pr list             # Override TTL for this call
+GHX_TTL=120 ghx pr list           # Same, via env var
+GHX_NO_CACHE=1 ghx pr list        # Same as --no-cache, via env var
 ```
 
 ## Daemon Details
 
 ### Auto-Start
 
-When `ghc` is invoked and no daemon is running, it **automatically starts one** in the background. This makes `ghc` a true drop-in replacement — no setup required.
+When `ghx` is invoked and no daemon is running, it **automatically starts one** in the background. This makes `ghx` a true drop-in replacement — no setup required.
 
 ### IPC: Unix Domain Socket
 
-- Path: `$XDG_RUNTIME_DIR/ghc/ghcd.sock` or `~/.ghc/ghcd.sock`
+- Path: `$XDG_RUNTIME_DIR/ghx/ghxd.sock` or `~/.ghx/ghxd.sock`
 - Permissions: `0600` (owner-only)
 - Protocol: length-prefixed JSON messages over the socket
 
@@ -229,7 +229,7 @@ The client sends a request containing the command, arguments, and resolved execu
 
 ### PID File
 
-- Path: `~/.ghc/ghcd.pid`
+- Path: `~/.ghx/ghxd.pid`
 - Used for daemon lifecycle management and stale process detection
 
 ### Graceful Shutdown
@@ -251,7 +251,7 @@ Default max entries: 1000 (configurable). When exceeded, least-recently-used ent
 
 ### Tracked Metrics
 
-The daemon tracks the following internally, exposed via `ghc cache stats` and the web dashboard:
+The daemon tracks the following internally, exposed via `ghx cache stats` and the web dashboard:
 
 - **Total requests** (and per-command)
 - **Cache hits / misses / passthrough** (counts and percentages)
@@ -264,7 +264,7 @@ The daemon tracks the following internally, exposed via `ghc cache stats` and th
 ### CLI Stats
 
 ```bash
-$ ghc cache stats
+$ ghx cache stats
 Uptime:          2h 34m
 Total Requests:  1,247
 Cache Hits:      891 (71.4%)
@@ -303,7 +303,7 @@ GET /api/log?limit=200  → [ { timestamp, command, cache_result, latency_ms }, 
 
 ## Configuration File
 
-Location: `~/.ghc/config.yaml`
+Location: `~/.ghx/config.yaml`
 
 ```yaml
 # Default TTL for all cached commands
@@ -321,8 +321,8 @@ ttl_overrides:
 max_cache_entries: 1000
 
 # Daemon settings
-socket_path: ~/.ghc/ghcd.sock
-pid_file: ~/.ghc/ghcd.pid
+socket_path: ~/.ghx/ghxd.sock
+pid_file: ~/.ghx/ghxd.pid
 auto_start: true
 
 # Custom allowlist additions
@@ -340,7 +340,7 @@ gh_path: /opt/homebrew/bin/gh
 
 # Logging
 log_level: info
-log_file: ~/.ghc/ghcd.log
+log_file: ~/.ghx/ghxd.log
 ```
 
 ## Security Considerations
@@ -362,11 +362,11 @@ log_file: ~/.ghc/ghcd.log
 ## Project Structure
 
 ```
-ghc/
+ghx/
 ├── cmd/
-│   ├── ghc/           # CLI client entry point
+│   ├── ghx/           # CLI client entry point
 │   │   └── main.go
-│   └── ghcd/          # Daemon entry point
+│   └── ghxd/          # Daemon entry point
 │       └── main.go
 ├── internal/
 │   ├── cache/         # LRU cache with TTL
@@ -409,15 +409,15 @@ ghc/
 
 ### Phase 1 — Core Caching + Dashboard
 
-- `ghc` client and `ghcd` daemon
+- `ghx` client and `ghxd` daemon
 - Unix domain socket IPC
 - Allowlisted command caching with context-aware keys
 - Configurable TTL (default 30s)
 - Singleflight request coalescing
 - Coarse-grained invalidation after mutations
 - Auto-start daemon, fallback to direct `gh` on failure
-- `ghc cache stats` for CLI metrics
-- `ghc daemon start/stop/status`
+- `ghx cache stats` for CLI metrics
+- `ghx daemon start/stop/status`
 - Config file support
 - Web dashboard with per-command stats, request log, and TTL analysis
 - JSON API for scripting
@@ -427,4 +427,4 @@ ghc/
 - Negative caching configuration (cache 404s, rate limit responses)
 - Cache warming (pre-fetch commonly used commands on daemon start)
 - `gh` extension integration (`gh cache` as a native extension)
-- Shell alias installer (`ghc install-alias` adds `alias gh=ghc` to shell rc)
+- Shell alias installer (`ghx install-alias` adds `alias gh=ghc` to shell rc)

@@ -1,9 +1,9 @@
-# Copilot Instructions for ghcd
+# Copilot Instructions for ghxd
 
 ## Build & Test
 
 ```bash
-make build          # Builds bin/ghc and bin/ghcd
+make build          # Builds bin/ghx and bin/ghxd
 make test           # go test ./...
 make clean          # rm -rf bin/
 
@@ -23,10 +23,10 @@ go test -v -race -coverprofile=coverage.out ./...
 
 **Two-binary daemon/client model** for caching `gh` CLI calls across concurrent AI agents:
 
-- **`ghc`** (client, `cmd/ghc/`) — Drop-in `gh` replacement. Resolves git context (host, repo, branch, token), classifies the command, and sends an IPC request to the daemon. Auto-starts the daemon if needed. Falls back to direct `gh` execution on any daemon failure.
-- **`ghcd`** (daemon, `cmd/ghcd/`) — Long-lived daemon. Accepts requests over a Unix domain socket (`~/.ghc/ghcd.sock`), serves cached responses, and runs a web dashboard on port 9847.
+- **`ghx`** (client, `cmd/ghc/`) — Drop-in `gh` replacement. Resolves git context (host, repo, branch, token), classifies the command, and sends an IPC request to the daemon. Auto-starts the daemon if needed. Falls back to direct `gh` execution on any daemon failure.
+- **`ghxd`** (daemon, `cmd/ghxd/`) — Long-lived daemon. Accepts requests over a Unix domain socket (`~/.ghx/ghxd.sock`), serves cached responses, and runs a web dashboard on port 9847.
 
-**Request flow:** `ghc` → Unix socket IPC → `ghcd` handler → allowlist classifier → cache lookup → (on miss) `executor.Execute("gh", ...)` → cache store → response back to client.
+**Request flow:** `ghx` → Unix socket IPC → `ghxd` handler → allowlist classifier → cache lookup → (on miss) `executor.Execute("gh", ...)` → cache store → response back to client.
 
 ### Internal packages
 
@@ -35,7 +35,7 @@ go test -v -race -coverprofile=coverage.out ./...
 | `allowlist` | Classifies commands as `Cacheable`, `Mutation`, or `Passthrough` |
 | `cache` | Thread-safe LRU cache with per-entry TTL and namespace invalidation |
 | `client` | Thin Unix socket client with health-check support |
-| `config` | Loads `~/.ghc/config.yaml` with env var overrides (`GHC_TTL`, `GHC_SOCKET`, `GHC_GH_PATH`) |
+| `config` | Loads `~/.ghx/config.yaml` with env var overrides (`GHX_TTL`, `GHX_SOCKET`, `GHX_GH_PATH`) |
 | `context` | Resolves git execution context (host, repo, branch, token hash) for cache key generation |
 | `daemon` | Server, connection handler, and request dispatcher |
 | `dashboard` | Embedded single-file HTML dashboard with JSON API endpoints |
@@ -79,9 +79,9 @@ Mutations flush all cache entries matching `host/repo/resourceType`. For example
 
 The `agent-plugin/` directory contains a Claude Code / Copilot CLI plugin:
 
-- `bin/ghc` and `bin/ghcd` are shell wrapper scripts that lazy-install the real binaries on first run
+- `bin/ghc` and `bin/ghxd` are shell wrapper scripts that lazy-install the real binaries on first run
 - `scripts/install.sh` auto-detects OS/arch and downloads from GitHub releases (filters out `plugin-v*` tags)
-- `skills/ghcd/SKILL.md` teaches the agent to prefer `ghc` over `gh`
+- `skills/ghxd/SKILL.md` teaches the agent to prefer `ghx` over `gh`
 
 ## Release Process
 

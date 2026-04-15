@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brunoborges/ghcd/internal/allowlist"
-	"github.com/brunoborges/ghcd/internal/cache"
-	"github.com/brunoborges/ghcd/internal/config"
-	execctx "github.com/brunoborges/ghcd/internal/context"
-	"github.com/brunoborges/ghcd/internal/executor"
-	"github.com/brunoborges/ghcd/internal/metrics"
-	"github.com/brunoborges/ghcd/internal/protocol"
+	"github.com/brunoborges/ghx/internal/allowlist"
+	"github.com/brunoborges/ghx/internal/cache"
+	"github.com/brunoborges/ghx/internal/config"
+	execctx "github.com/brunoborges/ghx/internal/context"
+	"github.com/brunoborges/ghx/internal/executor"
+	"github.com/brunoborges/ghx/internal/metrics"
+	"github.com/brunoborges/ghx/internal/protocol"
 )
 
 // Handler processes incoming requests from clients.

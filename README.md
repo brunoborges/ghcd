@@ -1,7 +1,7 @@
-# ghc — GitHub CLI Cache Proxy
+# ghx — GitHub CLI Cache Proxy
 
 <p align="center">
-  <img src="ghc-dashboard.png" alt="ghc Dashboard" width="700">
+  <img src="ghx-dashboard.png" alt="ghx Dashboard" width="700">
 </p>
 
 A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that eliminates redundant API calls, prevents rate limiting, and dramatically speeds up repeated commands.
@@ -15,7 +15,7 @@ A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that elimin
 - 🎯 **Allowlist-based** — only caches known-safe read-only commands
 - 🧹 **Auto-invalidation** — mutations flush related cache entries
 - 📊 **Web dashboard** — real-time hit rates, per-command stats, request log
-- 🔌 **Drop-in replacement** — just use `ghc` instead of `gh`
+- 🔌 **Drop-in replacement** — just use `ghx` instead of `gh`
 
 ## Install
 
@@ -23,122 +23,122 @@ A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that elimin
 
 ```bash
 brew tap brunoborges/tap
-brew install ghcd
+brew install ghxd
 ```
 
 ### Quick install script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
 ```
 
-This detects your OS and architecture, downloads the latest release, and installs `ghc` and `ghcd` to `/usr/local/bin`. To install elsewhere:
+This detects your OS and architecture, downloads the latest release, and installs `ghx` and `ghxd` to `/usr/local/bin`. To install elsewhere:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | INSTALL_DIR=~/.local/bin bash
+curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | INSTALL_DIR=~/.local/bin bash
 ```
 
 ### Manual download
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/brunoborges/ghcd/releases):
+Download the latest release for your platform from [GitHub Releases](https://github.com/brunoborges/ghx/releases):
 
 ```bash
 # macOS (Apple Silicon)
-curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-darwin-arm64.tar.gz | tar xz
-sudo cp ghc ghcd /usr/local/bin/
+curl -fsSL https://github.com/brunoborges/ghx/releases/latest/download/ghx-darwin-arm64.tar.gz | tar xz
+sudo cp ghx ghxd /usr/local/bin/
 
 # Linux (x64)
-curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-linux-amd64.tar.gz | tar xz
-sudo cp ghc ghcd /usr/local/bin/
+curl -fsSL https://github.com/brunoborges/ghx/releases/latest/download/ghx-linux-amd64.tar.gz | tar xz
+sudo cp ghx ghxd /usr/local/bin/
 
 # Linux (arm64)
-curl -fsSL https://github.com/brunoborges/ghcd/releases/latest/download/ghcd-linux-arm64.tar.gz | tar xz
-sudo cp ghc ghcd /usr/local/bin/
+curl -fsSL https://github.com/brunoborges/ghx/releases/latest/download/ghx-linux-arm64.tar.gz | tar xz
+sudo cp ghx ghxd /usr/local/bin/
 ```
 
 ### Build from source
 
 ```bash
-git clone https://github.com/brunoborges/ghcd.git
-cd ghcd
+git clone https://github.com/brunoborges/ghx.git
+cd ghxd
 make build
-# Binaries are in bin/ghc and bin/ghcd
-sudo cp bin/ghc bin/ghcd /usr/local/bin/
+# Binaries are in bin/ghx and bin/ghxd
+sudo cp bin/ghx bin/ghxd /usr/local/bin/
 ```
 
 ### Agents Plugin (Claude Code & Copilot CLI)
 
-If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins), install the plugin and your agent will automatically prefer `ghc` over `gh`:
+If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins), install the plugin and your agent will automatically prefer `ghx` over `gh`:
 
 ```bash
 # Add the marketplace (one-time)
 /plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghcd@agent-plugins
+/plugin install ghxd@agent-plugins
 ```
 
 > **Local development / testing:** `claude --plugin-dir ./agent-plugin`
 
 The plugin:
-- **Lazy-installs** `ghc` and `ghcd` binaries on first use
-- **Adds `ghc` to PATH** so agents use it automatically
-- **Includes a skill** that teaches agents to prefer `ghc` for all GitHub CLI calls
+- **Lazy-installs** `ghx` and `ghxd` binaries on first use
+- **Adds `ghx` to PATH** so agents use it automatically
+- **Includes a skill** that teaches agents to prefer `ghx` for all GitHub CLI calls
 
-See the [plugin README](agent-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghcd/releases) with the `plugin-v*` tag.
+See the [plugin README](agent-plugin/README.md) for details. Plugin releases are available on the [Releases page](https://github.com/brunoborges/ghx/releases) with the `plugin-v*` tag.
 
 ## Usage
 
-Use `ghc` exactly like `gh` — the daemon starts automatically on first use:
+Use `ghx` exactly like `gh` — the daemon starts automatically on first use:
 
 ```bash
 # These are cached (read-only commands)
-ghc pr list --repo owner/repo --json number,title
-ghc issue view 42 --json title,state
-ghc api /repos/owner/repo --jq '.stargazers_count'
-ghc run list --repo owner/repo
+ghx pr list --repo owner/repo --json number,title
+ghx issue view 42 --json title,state
+ghx api /repos/owner/repo --jq '.stargazers_count'
+ghx run list --repo owner/repo
 
 # These pass through directly to gh (mutations)
-ghc pr create --title "My PR" --body "Description"
-ghc issue close 42
+ghx pr create --title "My PR" --body "Description"
+ghx issue close 42
 ```
 
 ### Cache behavior
 
 ```
-First call:   ghc pr list ...   → 1.1s (cache miss, calls gh)
-Second call:  ghc pr list ...   → 0.1s (cache hit, instant)
-After 30s:    ghc pr list ...   → 1.0s (TTL expired, fresh call)
+First call:   ghx pr list ...   → 1.1s (cache miss, calls gh)
+Second call:  ghx pr list ...   → 0.1s (cache hit, instant)
+After 30s:    ghx pr list ...   → 1.0s (TTL expired, fresh call)
 ```
 
 ### Per-command options
 
 ```bash
-ghc --no-cache pr list ...     # Bypass cache for this call
-ghc --ttl 120 pr list ...      # Override TTL to 120 seconds
-GHC_NO_CACHE=1 ghc pr list ... # Same via env var
-GHC_TTL=60 ghc pr list ...     # Same via env var
+ghx --no-cache pr list ...     # Bypass cache for this call
+ghx --ttl 120 pr list ...      # Override TTL to 120 seconds
+GHX_NO_CACHE=1 ghx pr list ... # Same via env var
+GHX_TTL=60 ghx pr list ...     # Same via env var
 ```
 
 ## Daemon Management
 
 ```bash
-ghc daemon start          # Start in foreground
-ghc daemon start -d       # Start detached (background)
-ghc daemon stop           # Graceful shutdown
-ghc daemon status         # Show uptime and cache stats
-ghc daemon restart        # Stop + start
+ghx daemon start          # Start in foreground
+ghx daemon start -d       # Start detached (background)
+ghx daemon stop           # Graceful shutdown
+ghx daemon status         # Show uptime and cache stats
+ghx daemon restart        # Stop + start
 ```
 
-The daemon auto-starts on first `ghc` call. If the daemon can't start, `ghc` falls back to running `gh` directly — it never blocks you.
+The daemon auto-starts on first `ghx` call. If the daemon can't start, `ghx` falls back to running `gh` directly — it never blocks you.
 
 ## Cache Management
 
 ```bash
-ghc cache stats           # Show hit rates and per-command breakdown
-ghc cache flush           # Flush all entries
-ghc cache flush pr        # Flush PR-related entries only
-ghc cache keys            # List cached keys (debugging)
+ghx cache stats           # Show hit rates and per-command breakdown
+ghx cache flush           # Flush all entries
+ghx cache flush pr        # Flush PR-related entries only
+ghx cache keys            # List cached keys (debugging)
 ```
 
 ### Example stats output
@@ -212,7 +212,7 @@ Mutations automatically invalidate related cache entries. For example, `gh pr me
 
 ### Custom Commands
 
-You can add your own commands to the allowlist via `~/.ghc/config.yaml`:
+You can add your own commands to the allowlist via `~/.ghx/config.yaml`:
 
 ```yaml
 additional_cacheable:
@@ -221,11 +221,11 @@ additional_cacheable:
   - "gh secret list"
 ```
 
-Each entry should be the full command prefix (e.g., `"gh status"` for a single-word subcommand, or `"gh variable list"` for two-word). Custom commands are classified with `ResourceUnknown` — they participate in caching but won't be invalidated by mutation detection. To apply changes, restart the daemon: `ghcd --restart`.
+Each entry should be the full command prefix (e.g., `"gh status"` for a single-word subcommand, or `"gh variable list"` for two-word). Custom commands are classified with `ResourceUnknown` — they participate in caching but won't be invalidated by mutation detection. To apply changes, restart the daemon: `ghxd --restart`.
 
 ## Configuration
 
-Configuration file: `~/.ghc/config.yaml`
+Configuration file: `~/.ghx/config.yaml`
 
 ```yaml
 # Default TTL for all cached commands (default: 30s)
@@ -244,7 +244,7 @@ max_cache_entries: 1000
 # Dashboard HTTP port (default: 9847)
 dashboard_port: 9847
 
-# Auto-start daemon on first ghc call (default: true)
+# Auto-start daemon on first ghx call (default: true)
 auto_start: true
 
 # Additional commands to cache
@@ -260,13 +260,13 @@ additional_cacheable:
 ```
 ┌─────────┐  ┌─────────┐  ┌─────────┐
 │ Agent 1 │  │ Agent 2 │  │ Agent 3 │
-│ (ghc)   │  │ (ghc)   │  │ (ghc)   │
+│ (ghx)   │  │ (ghx)   │  │ (ghx)   │
 └────┬────┘  └────┬────┘  └────┬────┘
      │            │            │
      └────────────┼────────────┘
                   │ Unix Domain Socket
            ┌──────┴──────┐
-           │    ghcd     │
+           │    ghxd     │
            │  (daemon)   │
            ├─────────────┤
            │ Cache (LRU) │
@@ -285,7 +285,7 @@ additional_cacheable:
 - **Context-aware cache keys** — includes repo, branch, host, and auth token hash to prevent cross-context collisions
 - **Singleflight** — concurrent identical requests share a single `gh` execution
 - **Coarse invalidation** — mutations flush the entire resource namespace (all PR cache for that repo)
-- **Graceful fallback** — if daemon is down or fails, `ghc` runs `gh` directly
+- **Graceful fallback** — if daemon is down or fails, `ghx` runs `gh` directly
 
 ## Security
 

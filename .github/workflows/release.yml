@@ -45,14 +45,14 @@ jobs:
           for platform in "${platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
-            output="dist/ghcd-${GOOS}-${GOARCH}"
+            output="dist/ghx-${GOOS}-${GOARCH}"
             mkdir -p "${output}"
 
             echo "Building ${GOOS}/${GOARCH}..."
-            GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghc" ./cmd/ghc
-            GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghcd" ./cmd/ghcd
+            GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghx" ./cmd/ghx
+            GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghxd" ./cmd/ghxd
 
-            tar -czf "dist/ghcd-${GOOS}-${GOARCH}.tar.gz" -C "${output}" ghc ghcd
+            tar -czf "dist/ghx-${GOOS}-${GOARCH}.tar.gz" -C "${output}" ghx ghxd
           done
 
       - name: Create GitHub Release
@@ -80,63 +80,63 @@ jobs:
         run: |
           VERSION=${{ steps.build.outputs.version }}
           VERSION_NUM=${{ steps.build.outputs.version_num }}
-          BASE_URL="https://github.com/brunoborges/ghcd/releases/download/${VERSION}"
+          BASE_URL="https://github.com/brunoborges/ghx/releases/download/${VERSION}"
 
           SHA_DARWIN_ARM64=${{ steps.checksums.outputs.SHA_DARWIN_ARM64 }}
           SHA_DARWIN_AMD64=${{ steps.checksums.outputs.SHA_DARWIN_AMD64 }}
           SHA_LINUX_AMD64=${{ steps.checksums.outputs.SHA_LINUX_AMD64 }}
           SHA_LINUX_ARM64=${{ steps.checksums.outputs.SHA_LINUX_ARM64 }}
 
-          cat > ghcd.rb << FORMULA
-          class Ghcd < Formula
+          cat > ghx.rb << FORMULA
+          class Ghx < Formula
             desc "GitHub CLI Cache Proxy — caching daemon for gh to prevent API rate limiting"
-            homepage "https://github.com/brunoborges/ghcd"
+            homepage "https://github.com/brunoborges/ghx"
             version "${VERSION_NUM}"
             license "MIT"
 
             on_macos do
               if Hardware::CPU.arm?
-                url "${BASE_URL}/ghcd-darwin-arm64.tar.gz"
+                url "${BASE_URL}/ghx-darwin-arm64.tar.gz"
                 sha256 "${SHA_DARWIN_ARM64}"
               else
-                url "${BASE_URL}/ghcd-darwin-amd64.tar.gz"
+                url "${BASE_URL}/ghx-darwin-amd64.tar.gz"
                 sha256 "${SHA_DARWIN_AMD64}"
               end
             end
 
             on_linux do
               if Hardware::CPU.arm?
-                url "${BASE_URL}/ghcd-linux-arm64.tar.gz"
+                url "${BASE_URL}/ghx-linux-arm64.tar.gz"
                 sha256 "${SHA_LINUX_ARM64}"
               else
-                url "${BASE_URL}/ghcd-linux-amd64.tar.gz"
+                url "${BASE_URL}/ghx-linux-amd64.tar.gz"
                 sha256 "${SHA_LINUX_AMD64}"
               end
             end
 
             def install
-              bin.install "ghc"
-              bin.install "ghcd"
+              bin.install "ghx"
+              bin.install "ghxd"
             end
 
             test do
-              assert_match "ghcd", shell_output("#{bin}/ghcd --help")
+              assert_match "ghxd", shell_output("#{bin}/ghxd --help")
             end
           end
           FORMULA
 
-          sed -i 's/^          //' ghcd.rb
+          sed -i 's/^          //' ghx.rb
 
           echo "Generated formula:"
-          cat ghcd.rb
+          cat ghx.rb
 
           # Clone the tap, update formula, push
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/brunoborges/homebrew-tap.git" tap
           mkdir -p tap/Formula
-          cp ghcd.rb tap/Formula/ghcd.rb
+          cp ghx.rb tap/Formula/ghx.rb
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/ghcd.rb
-          git commit -m "Update ghcd to ${VERSION}"
+          git add Formula/ghx.rb
+          git commit -m "Update ghx to ${VERSION}"
           git push

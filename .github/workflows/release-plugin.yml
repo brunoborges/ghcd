@@ -32,10 +32,10 @@ jobs:
           # Required files
           for f in \
             agent-plugin/.claude-plugin/plugin.json \
-            agent-plugin/bin/ghc \
-            agent-plugin/bin/ghcd \
+            agent-plugin/bin/ghx \
+            agent-plugin/bin/ghxd \
             agent-plugin/scripts/install.sh \
-            agent-plugin/skills/ghcd/SKILL.md \
+            agent-plugin/skills/ghxd/SKILL.md \
             agent-plugin/README.md; do
             [ -f "$f" ] || { echo "Missing: $f"; exit 1; }
           done
@@ -44,13 +44,13 @@ jobs:
           python3 -m json.tool agent-plugin/.claude-plugin/plugin.json > /dev/null
 
           # Validate scripts parse
-          bash -n agent-plugin/bin/ghc
-          bash -n agent-plugin/bin/ghcd
+          bash -n agent-plugin/bin/ghx
+          bash -n agent-plugin/bin/ghxd
           bash -n agent-plugin/scripts/install.sh
 
           # Ensure bin scripts are executable
-          [ -x agent-plugin/bin/ghc ] || { echo "bin/ghc not executable"; exit 1; }
-          [ -x agent-plugin/bin/ghcd ] || { echo "bin/ghcd not executable"; exit 1; }
+          [ -x agent-plugin/bin/ghx ] || { echo "bin/ghx not executable"; exit 1; }
+          [ -x agent-plugin/bin/ghxd ] || { echo "bin/ghxd not executable"; exit 1; }
           [ -x agent-plugin/scripts/install.sh ] || { echo "scripts/install.sh not executable"; exit 1; }
 
           echo "✓ Plugin structure valid"
@@ -75,14 +75,14 @@ jobs:
       - name: Package plugin
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          tar -czf "ghcd-plugin-${VERSION}.tar.gz" -C agent-plugin .
+          tar -czf "ghxd-plugin-${VERSION}.tar.gz" -C agent-plugin .
           echo "Packaged plugin:"
-          tar -tzf "ghcd-plugin-${VERSION}.tar.gz" | head -20
+          tar -tzf "ghxd-plugin-${VERSION}.tar.gz" | head -20
 
       - name: Compute checksum
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          sha256sum "ghcd-plugin-${VERSION}.tar.gz" | tee checksums.txt
+          sha256sum "ghxd-plugin-${VERSION}.tar.gz" | tee checksums.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -90,5 +90,5 @@ jobs:
           name: "Plugin ${{ steps.version.outputs.tag }}"
           generate_release_notes: true
           files: |
-            ghcd-plugin-${{ steps.version.outputs.version }}.tar.gz
+            ghxd-plugin-${{ steps.version.outputs.version }}.tar.gz
             checksums.txt

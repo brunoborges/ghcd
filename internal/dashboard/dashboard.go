@@ -21,7 +21,7 @@ const dashboardHTML = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ghc Dashboard</title>
+<title>ghx Dashboard</title>
 <style>
   :root {
     --bg: #0d1117; --surface: #161b22; --border: #30363d;
@@ -79,7 +79,7 @@ const dashboardHTML = `<!DOCTYPE html>
 </style>
 </head>
 <body>
-<h1><span>ghc</span> Dashboard</h1>
+<h1><span>ghx</span> Dashboard</h1>
 <p class="subtitle">GitHub CLI Cache Proxy — <span id="uptime">-</span></p>
 
 <div class="cards">

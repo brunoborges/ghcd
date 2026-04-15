@@ -1,8 +1,8 @@
 all: build
 
 build:
-	go build -o bin/ghc ./cmd/ghc
-	go build -o bin/ghcd ./cmd/ghcd
+	go build -o bin/ghx ./cmd/ghx
+	go build -o bin/ghxd ./cmd/ghxd
 
 test:
 	go test ./...
