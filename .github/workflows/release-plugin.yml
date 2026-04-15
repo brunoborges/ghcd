@@ -1,0 +1,94 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'plugin-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#plugin-v}
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate plugin structure
+        run: |
+          set -e
+          echo "Validating plugin structure..."
+
+          # Required files
+          for f in \
+            agents-plugin/.claude-plugin/plugin.json \
+            agents-plugin/bin/ghc \
+            agents-plugin/bin/ghcd \
+            agents-plugin/scripts/install.sh \
+            agents-plugin/skills/ghcd/SKILL.md \
+            agents-plugin/README.md; do
+            [ -f "$f" ] || { echo "Missing: $f"; exit 1; }
+          done
+
+          # Validate JSON
+          python3 -m json.tool agents-plugin/.claude-plugin/plugin.json > /dev/null
+
+          # Validate scripts parse
+          bash -n agents-plugin/bin/ghc
+          bash -n agents-plugin/bin/ghcd
+          bash -n agents-plugin/scripts/install.sh
+
+          # Ensure bin scripts are executable
+          [ -x agents-plugin/bin/ghc ] || { echo "bin/ghc not executable"; exit 1; }
+          [ -x agents-plugin/bin/ghcd ] || { echo "bin/ghcd not executable"; exit 1; }
+          [ -x agents-plugin/scripts/install.sh ] || { echo "scripts/install.sh not executable"; exit 1; }
+
+          echo "✓ Plugin structure valid"
+
+      - name: Stamp version in plugin.json
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          cd agents-plugin
+          python3 -c "
+          import json, sys
+          with open('.claude-plugin/plugin.json', 'r+') as f:
+              data = json.load(f)
+              data['version'] = '${VERSION}'
+              f.seek(0)
+              json.dump(data, f, indent=2)
+              f.write('\n')
+              f.truncate()
+          "
+          echo "Stamped version ${VERSION} in plugin.json:"
+          cat .claude-plugin/plugin.json
+
+      - name: Package plugin
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          tar -czf "ghcd-plugin-${VERSION}.tar.gz" -C agents-plugin .
+          echo "Packaged plugin:"
+          tar -tzf "ghcd-plugin-${VERSION}.tar.gz" | head -20
+
+      - name: Compute checksum
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          sha256sum "ghcd-plugin-${VERSION}.tar.gz" | tee checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Plugin ${{ steps.version.outputs.tag }}"
+          generate_release_notes: true
+          files: |
+            ghcd-plugin-${{ steps.version.outputs.version }}.tar.gz
+            checksums.txt

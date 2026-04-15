@@ -1,0 +1,13 @@
+{
+  "name": "ghcd",
+  "description": "GitHub CLI Cache Proxy — eliminates redundant API calls, prevents rate limiting, and speeds up repeated gh commands in agentic workflows",
+  "version": "1.0.0",
+  "author": {
+    "name": "Bruno Borges",
+    "url": "https://github.com/brunoborges"
+  },
+  "homepage": "https://github.com/brunoborges/ghcd",
+  "repository": "https://github.com/brunoborges/ghcd",
+  "license": "MIT",
+  "keywords": ["github", "cli", "cache", "proxy", "rate-limit", "performance", "agentic"]
+}
