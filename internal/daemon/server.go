@@ -32,10 +32,11 @@ type Server struct {
 	httpSrv *http.Server
 	done    chan struct{}
 	wg      sync.WaitGroup
+	version string
 }
 
 // NewServer creates a new daemon server.
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, version string) *Server {
 	c := cache.New(cfg.MaxCacheEntries)
 	stats := metrics.New()
 	classifier := allowlist.NewClassifier(cfg.AdditionalCache)
@@ -47,6 +48,7 @@ func NewServer(cfg *config.Config) *Server {
 		stats:   stats,
 		handler: handler,
 		done:    make(chan struct{}),
+		version: version,
 	}
 }
 
@@ -156,9 +158,13 @@ func (s *Server) startHTTP() {
 	// JSON API
 	mux.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
 		snap := s.stats.Snapshot(s.cache.Size(), s.cfg.MaxCacheEntries)
+		resp := struct {
+			Version string `json:"version"`
+			metrics.Snapshot
+		}{s.version, snap}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(snap)
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	mux.HandleFunc("/api/log", func(w http.ResponseWriter, r *http.Request) {
@@ -179,6 +185,34 @@ func (s *Server) startHTTP() {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		json.NewEncoder(w).Encode(recs)
+	})
+
+	// Mutating endpoints — POST only, origin-validated
+	mux.HandleFunc("/api/flush", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		resource := allowlist.ResourceType(r.URL.Query().Get("resource"))
+		count := s.cache.Flush(resource)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"flushed": count})
+	})
+
+	mux.HandleFunc("/api/shutdown", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "shutting_down"})
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			s.Shutdown()
+		}()
 	})
 
 	s.httpSrv = &http.Server{

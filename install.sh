@@ -59,5 +59,27 @@ chmod +x "${INSTALL_DIR}/ghx" "${INSTALL_DIR}/ghxd"
 echo ""
 echo "✓ ghx  installed to ${INSTALL_DIR}/ghx"
 echo "✓ ghxd installed to ${INSTALL_DIR}/ghxd"
+
+# Install gh shim if no real gh is in PATH
+if ! command -v gh &>/dev/null; then
+  GH_SHIM='#!/bin/sh
+# ghx-shim: this script redirects gh commands through ghx for caching
+exec ghx "$@"'
+
+  if [ -w "$INSTALL_DIR" ]; then
+    printf '%s\n' "$GH_SHIM" > "${INSTALL_DIR}/gh"
+  else
+    echo "(requires sudo for gh shim)"
+    printf '%s\n' "$GH_SHIM" | sudo tee "${INSTALL_DIR}/gh" > /dev/null
+  fi
+  chmod +x "${INSTALL_DIR}/gh"
+  echo "✓ gh   shim installed to ${INSTALL_DIR}/gh (redirects to ghx)"
+  echo ""
+  echo "The gh shim lets you use 'gh' as usual — commands are cached via ghx."
+  echo "The real GitHub CLI will be downloaded automatically on first use."
+else
+  echo "ℹ gh   already found at $(command -v gh) (no shim installed)"
+fi
+
 echo ""
-echo "Run 'ghx --help' to get started, or just use 'ghx' instead of 'gh'."
+echo "Run 'ghx xhelp' to get started, or just use 'ghx' (or 'gh') instead of 'gh'."

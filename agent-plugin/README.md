@@ -23,7 +23,7 @@ This eliminates redundant API calls, prevents rate limiting, and dramatically sp
 /plugin marketplace add brunoborges/agent-plugins
 
 # Install the plugin
-/plugin install ghxd@agent-plugins
+/plugin install ghx@agent-plugins
 ```
 
 ### Local development / testing
@@ -81,9 +81,9 @@ agent-plugin/
 
 ## Requirements
 
-- `gh` (GitHub CLI) must be installed and authenticated
 - macOS or Linux (amd64 or arm64)
 - `curl` and `tar` available in PATH
+- `gh` (GitHub CLI) is **optional** — if not installed, `ghx` auto-downloads it on first use. However, `gh auth login` must be run before using any authenticated commands.
 
 ## Learn more
 

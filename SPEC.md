@@ -176,21 +176,28 @@ ghx pr list --repo owner/repo --json number,title
 ### Daemon Management
 
 ```bash
-ghx daemon start          # Start daemon (foreground, for debugging)
-ghx daemon start -d       # Start daemon (background, detached)
-ghx daemon stop           # Graceful shutdown
-ghx daemon status         # Show PID, uptime, cache stats summary
-ghx daemon restart        # Stop + start
+ghx xdaemon start          # Start daemon (foreground, for debugging)
+ghx xdaemon start -d       # Start daemon (background, detached)
+ghx xdaemon stop           # Graceful shutdown
+ghx xdaemon status         # Show PID, uptime, cache stats summary
+ghx xdaemon restart        # Stop + start
 ```
 
 ### Cache Management
 
 ```bash
-ghx cache flush           # Flush all cached entries
-ghx cache flush pr        # Flush all PR-related entries
-ghx cache flush --repo owner/repo  # Flush entries for a specific repo
-ghx cache stats           # Show hit rate, per-command breakdown
-ghx cache keys            # List currently cached keys (for debugging)
+ghx xcache flush           # Flush all cached entries
+ghx xcache flush pr        # Flush all PR-related entries
+ghx xcache flush --repo owner/repo  # Flush entries for a specific repo
+ghx xcache stats           # Show hit rate, per-command breakdown
+ghx xcache keys            # List currently cached keys (for debugging)
+```
+
+### GitHub CLI Management
+
+```bash
+ghx ghcli status             # Show which gh binary is in use, version, and age
+ghx ghcli upgrade            # Download the latest GitHub CLI to ~/.ghx/bin/gh
 ```
 
 ### Configuration
@@ -251,7 +258,7 @@ Default max entries: 1000 (configurable). When exceeded, least-recently-used ent
 
 ### Tracked Metrics
 
-The daemon tracks the following internally, exposed via `ghx cache stats` and the web dashboard:
+The daemon tracks the following internally, exposed via `ghx xcache stats` and the web dashboard:
 
 - **Total requests** (and per-command)
 - **Cache hits / misses / passthrough** (counts and percentages)
@@ -264,7 +271,7 @@ The daemon tracks the following internally, exposed via `ghx cache stats` and th
 ### CLI Stats
 
 ```bash
-$ ghx cache stats
+$ ghx xcache stats
 Uptime:          2h 34m
 Total Requests:  1,247
 Cache Hits:      891 (71.4%)
@@ -335,13 +342,74 @@ metrics:
   dashboard: false
   port: 9847
 
-# gh binary path (auto-detected if not set)
+# gh binary path (auto-resolved if not set)
+# Resolution: this setting → PATH → ~/.ghx/bin/gh → auto-download
 gh_path: /opt/homebrew/bin/gh
 
 # Logging
 log_level: info
 log_file: ~/.ghx/ghxd.log
 ```
+
+## GitHub CLI Resolution and Auto-Download
+
+`ghx` does not require the GitHub CLI (`gh`) to be pre-installed. When `gh` is needed, it is resolved using the `internal/ghcli` package with the following priority:
+
+### Resolution Order
+
+1. **User override** — `gh_path` in config or `GHX_GH_PATH` env var (if not the default `"gh"`)
+2. **PATH scan** — search `PATH` for a real `gh` binary, skipping ghx shims
+3. **Managed location** — `~/.ghx/bin/gh` (previously auto-downloaded)
+4. **Auto-download** — download from `cli/cli` GitHub releases to `~/.ghx/bin/gh`
+
+### `gh` Shim
+
+The install script places a lightweight shim at `INSTALL_DIR/gh` when no real `gh` is found. The shim contains a `# ghx-shim` marker comment for detection:
+
+```sh
+#!/bin/sh
+# ghx-shim: this script redirects gh commands through ghx for caching
+exec ghx "$@"
+```
+
+**Shim detection** uses three strategies to prevent infinite recursion:
+1. **Symlink resolution** — `filepath.EvalSymlinks` to see if `gh` resolves to the same file as `ghx`
+2. **Inode comparison** — `os.SameFile` to catch hardlinks
+3. **Header marker** — read first 512 bytes and check for `# ghx-shim` (only for text files; binary magic bytes are checked to skip compiled executables)
+
+### Auto-Download
+
+When no `gh` is available, `ghx` downloads it from [cli/cli releases](https://github.com/cli/cli/releases):
+
+1. Fetch latest version from the GitHub Releases API
+2. Determine the correct asset name based on OS (`macOS`, `linux`) and architecture (`amd64`, `arm64`)
+3. Download the release checksums file and verify SHA-256 of the archive
+4. Extract the `gh` binary from the archive (`.tar.gz` for Linux, `.zip` for macOS)
+5. Atomically install to `~/.ghx/bin/gh` (temp file + rename)
+
+**Safety measures:**
+- **Checksum verification** — SHA-256 hash is verified against the official release checksums
+- **Lock file** — prevents concurrent download from multiple `ghx` processes
+- **Archive validation** — rejects symlinks and path traversal entries during extraction
+- **Stale lock detection** — lock files older than 5 minutes are considered stale and removed
+
+### Lazy Resolution
+
+Resolution is **lazy** — it only happens on code paths that actually need `gh`:
+- In `ghx`: triggered before `execDirect()` or `execctx.Resolve()` calls (not for `xversion`, `xhelp`, `xdaemon`, `xcache`)
+- In `ghxd`: triggered once at daemon startup before accepting connections
+
+This ensures commands like `ghx xversion` work instantly even offline.
+
+### Staleness Warning and Upgrade
+
+The managed `gh` binary at `~/.ghx/bin/gh` does not auto-update. Instead:
+
+- **Staleness warning**: When `ghx` resolves the managed binary and it is older than 30 days (by file modification time), a one-line warning is printed to stderr: `ghx: managed gh binary is N days old — run 'ghx ghcli upgrade' to update`. This does not block execution.
+- **Explicit upgrade**: `ghx ghcli upgrade` force-downloads the latest release, replacing the existing managed binary. It uses the same checksum-verified, lock-protected download path as the initial install.
+- **Status**: `ghx ghcli status` shows the resolved `gh` path, source (config override / PATH / managed), version, and age.
+
+Staleness checks only apply to the managed binary. If `gh` was found in PATH or via an explicit config override, no staleness warning is shown.
 
 ## Security Considerations
 
@@ -388,6 +456,10 @@ ghx/
 │   ├── executor/      # gh command execution
 │   │   ├── executor.go
 │   │   └── executor_test.go
+│   ├── ghcli/         # gh binary resolution and auto-download
+│   │   ├── resolve.go
+│   │   ├── shim.go
+│   │   └── download.go
 │   ├── metrics/       # Counters, stats, JSON API
 │   │   ├── metrics.go
 │   │   └── metrics_test.go
@@ -416,8 +488,8 @@ ghx/
 - Singleflight request coalescing
 - Coarse-grained invalidation after mutations
 - Auto-start daemon, fallback to direct `gh` on failure
-- `ghx cache stats` for CLI metrics
-- `ghx daemon start/stop/status`
+- `ghx xcache stats` for CLI metrics
+- `ghx xdaemon start/stop/status`
 - Config file support
 - Web dashboard with per-command stats, request log, and TTL analysis
 - JSON API for scripting
@@ -427,4 +499,4 @@ ghx/
 - Negative caching configuration (cache 404s, rate limit responses)
 - Cache warming (pre-fetch commonly used commands on daemon start)
 - `gh` extension integration (`gh cache` as a native extension)
-- Shell alias installer (`ghx install-alias` adds `alias gh=ghc` to shell rc)
+- Version pinning for auto-downloaded `gh` binary (`gh_version` config option)
