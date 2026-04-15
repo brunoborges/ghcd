@@ -33,10 +33,11 @@ type Server struct {
 	httpSrv *http.Server
 	done    chan struct{}
 	wg      sync.WaitGroup
+	version string
 }
 
 // NewServer creates a new daemon server.
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, version string) *Server {
 	c := cache.New(cfg.MaxCacheEntries)
 	stats := metrics.New()
 	classifier := allowlist.NewClassifier(cfg.AdditionalCache)
@@ -48,6 +49,7 @@ func NewServer(cfg *config.Config) *Server {
 		stats:   stats,
 		handler: handler,
 		done:    make(chan struct{}),
+		version: version,
 	}
 }
 
@@ -157,9 +159,13 @@ func (s *Server) startHTTP() {
 	// JSON API
 	mux.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
 		snap := s.stats.Snapshot(s.cache.Size(), s.cfg.MaxCacheEntries)
+		resp := struct {
+			Version string `json:"version"`
+			metrics.Snapshot
+		}{s.version, snap}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(snap)
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	mux.HandleFunc("/api/log", func(w http.ResponseWriter, r *http.Request) {

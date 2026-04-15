@@ -9,6 +9,8 @@ import (
 	"github.com/brunoborges/ghx/internal/daemon"
 )
 
+var version = "dev"
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -21,6 +23,7 @@ func main() {
 
 	if len(os.Args) > 1 && os.Args[1] == "--help" {
 		fmt.Println("ghxd — GitHub CLI Cache Proxy Daemon")
+		fmt.Printf("Version: %s\n", version)
 		fmt.Println()
 		fmt.Println("Usage: ghxd [--help]")
 		fmt.Println()
@@ -30,7 +33,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	srv := daemon.NewServer(cfg)
+	srv := daemon.NewServer(cfg, version)
 	if err := srv.Run(); err != nil {
 		log.Fatalf("fatal: %v", err)
 	}

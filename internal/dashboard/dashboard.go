@@ -157,7 +157,7 @@ const dashboardHTML = `<!DOCTYPE html>
 </div>
 
 <footer>
-  <a href="https://github.com/brunoborges/ghx">ghx</a> — MIT License —
+  <a href="https://github.com/brunoborges/ghx">ghx</a> <span id="version"></span> — MIT License —
   Made by <a href="https://github.com/brunoborges">Bruno Borges</a>
 </footer>
 
@@ -186,6 +186,7 @@ async function refresh() {
 
 function renderStats(s) {
   $('#uptime').textContent = 'Uptime: ' + s.uptime;
+  if (s.version) $('#version').textContent = s.version;
   $('#total').textContent = fmtNum(s.total);
   $('#hits').textContent = fmtNum(s.hits);
   $('#misses').textContent = fmtNum(s.misses);
