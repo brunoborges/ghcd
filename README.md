@@ -192,7 +192,7 @@ Only explicitly allowlisted read-only commands are cached:
 |---------|--------|
 | `gh pr list/view/status/checks/diff` | ✅ |
 | `gh issue list/view/status` | ✅ |
-| `gh repo view` | ✅ |
+| `gh repo view/list` | ✅ |
 | `gh run list/view` | ✅ |
 | `gh workflow list/view` | ✅ |
 | `gh release list/view` | ✅ |

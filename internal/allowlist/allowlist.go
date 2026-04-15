@@ -45,6 +45,7 @@ var cacheableCommands = map[string]ResourceType{
 	"issue view":     ResourceIssue,
 	"issue status":   ResourceIssue,
 	"repo view":      ResourceRepo,
+	"repo list":      ResourceRepo,
 	"run list":       ResourceRun,
 	"run view":       ResourceRun,
 	"workflow list":  ResourceWorkflow,
