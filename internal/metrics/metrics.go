@@ -28,12 +28,12 @@ type LogEntry struct {
 
 // CommandStats tracks per-command hit/miss statistics.
 type CommandStats struct {
-	Hits          int64   `json:"hits"`
-	Misses        int64   `json:"misses"`
-	Passthrough   int64   `json:"passthrough"`
-	Coalesced     int64   `json:"coalesced"`
+	Hits           int64   `json:"hits"`
+	Misses         int64   `json:"misses"`
+	Passthrough    int64   `json:"passthrough"`
+	Coalesced      int64   `json:"coalesced"`
 	TotalLatencyMs float64 `json:"total_latency_ms"`
-	RequestCount  int64   `json:"request_count"`
+	RequestCount   int64   `json:"request_count"`
 }
 
 // HitRate returns the cache hit rate for this command.
@@ -55,18 +55,18 @@ func (cs *CommandStats) AvgLatencyMs() float64 {
 
 // Stats holds all metrics for the daemon.
 type Stats struct {
-	mu        sync.RWMutex
-	startedAt time.Time
-	total     int64
-	hits      int64
-	misses    int64
-	passthrough int64
-	coalesced   int64
-	evictions   int64
+	mu            sync.RWMutex
+	startedAt     time.Time
+	total         int64
+	hits          int64
+	misses        int64
+	passthrough   int64
+	coalesced     int64
+	evictions     int64
 	invalidations int64
-	commands  map[string]*CommandStats
-	log       []LogEntry
-	maxLog    int
+	commands      map[string]*CommandStats
+	log           []LogEntry
+	maxLog        int
 
 	// Inter-request intervals for TTL analysis
 	lastSeen  map[string]time.Time
@@ -163,19 +163,19 @@ func (s *Stats) RecordInvalidation(count int) {
 
 // Snapshot represents a point-in-time view of all stats.
 type Snapshot struct {
-	Uptime        string                    `json:"uptime"`
-	UptimeSeconds float64                   `json:"uptime_seconds"`
-	Total         int64                     `json:"total"`
-	Hits          int64                     `json:"hits"`
-	Misses        int64                     `json:"misses"`
-	Passthrough   int64                     `json:"passthrough"`
-	Coalesced     int64                     `json:"coalesced"`
-	Evictions     int64                     `json:"evictions"`
-	Invalidations int64                     `json:"invalidations"`
-	HitRate       float64                   `json:"hit_rate"`
-	CacheSize     int                       `json:"cache_size"`
-	MaxCacheSize  int                       `json:"max_cache_size"`
-	Commands      map[string]*CommandStats  `json:"commands"`
+	Uptime        string                   `json:"uptime"`
+	UptimeSeconds float64                  `json:"uptime_seconds"`
+	Total         int64                    `json:"total"`
+	Hits          int64                    `json:"hits"`
+	Misses        int64                    `json:"misses"`
+	Passthrough   int64                    `json:"passthrough"`
+	Coalesced     int64                    `json:"coalesced"`
+	Evictions     int64                    `json:"evictions"`
+	Invalidations int64                    `json:"invalidations"`
+	HitRate       float64                  `json:"hit_rate"`
+	CacheSize     int                      `json:"cache_size"`
+	MaxCacheSize  int                      `json:"max_cache_size"`
+	Commands      map[string]*CommandStats `json:"commands"`
 }
 
 // Snapshot returns a point-in-time copy of all stats.

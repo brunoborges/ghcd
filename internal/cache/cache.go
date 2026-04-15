@@ -10,15 +10,15 @@ import (
 
 // Entry is a cached response.
 type Entry struct {
-	Key        string
-	Stdout     []byte
-	Stderr     []byte
-	ExitCode   int
-	CachedAt   time.Time
-	TTL        time.Duration
-	Resource   allowlist.ResourceType
-	Host       string
-	Repo       string
+	Key      string
+	Stdout   []byte
+	Stderr   []byte
+	ExitCode int
+	CachedAt time.Time
+	TTL      time.Duration
+	Resource allowlist.ResourceType
+	Host     string
+	Repo     string
 }
 
 // IsExpired returns true if the entry has outlived its TTL.
@@ -28,11 +28,11 @@ func (e *Entry) IsExpired() bool {
 
 // Cache is a thread-safe LRU cache with TTL support and namespace invalidation.
 type Cache struct {
-	mu       sync.RWMutex
-	maxSize  int
-	items    map[string]*list.Element
-	order    *list.List // front = most recently used
-	onEvict  func(key string)
+	mu      sync.RWMutex
+	maxSize int
+	items   map[string]*list.Element
+	order   *list.List // front = most recently used
+	onEvict func(key string)
 }
 
 // New creates a cache with the given max number of entries.

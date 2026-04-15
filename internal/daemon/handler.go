@@ -25,7 +25,7 @@ type Handler struct {
 	stats      *metrics.Stats
 
 	// singleflight: one in-flight request per cache key
-	mu      sync.Mutex
+	mu       sync.Mutex
 	inflight map[string]*call
 }
 

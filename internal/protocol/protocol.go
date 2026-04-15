@@ -30,11 +30,11 @@ type Request struct {
 type RequestType string
 
 const (
-	TypeExec       RequestType = "exec"       // Execute a gh command
-	TypeFlush      RequestType = "flush"      // Flush cache
-	TypeStats      RequestType = "stats"      // Get stats
-	TypeKeys       RequestType = "keys"       // List cache keys
-	TypeShutdown   RequestType = "shutdown"   // Graceful shutdown
+	TypeExec     RequestType = "exec"     // Execute a gh command
+	TypeFlush    RequestType = "flush"    // Flush cache
+	TypeStats    RequestType = "stats"    // Get stats
+	TypeKeys     RequestType = "keys"     // List cache keys
+	TypeShutdown RequestType = "shutdown" // Graceful shutdown
 )
 
 // Response is sent from the ghxd daemon to the ghx client.
