@@ -76,6 +76,10 @@ const dashboardHTML = `<!DOCTYPE html>
   .badge.miss { background: rgba(248,81,73,0.15); color: var(--red); }
   .badge.passthrough { background: rgba(210,153,34,0.15); color: var(--yellow); }
   .badge.coalesced { background: rgba(88,166,255,0.15); color: var(--blue); }
+
+  footer { padding: 24px 0; text-align: center; color: var(--text-dimmer); font-size: 12px; margin-top: 32px; border-top: 1px solid var(--border); }
+  footer a { color: var(--text-dim); text-decoration: none; }
+  footer a:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -114,6 +118,11 @@ const dashboardHTML = `<!DOCTYPE html>
   <div class="refresh-info">Auto-refreshes every 2s</div>
   <div class="log-container" id="logcontainer"></div>
 </div>
+
+<footer>
+  <a href="https://github.com/brunoborges/ghx">ghx</a> — MIT License —
+  Made by <a href="https://github.com/brunoborges">Bruno Borges</a>
+</footer>
 
 <script>
 const $ = s => document.querySelector(s);
