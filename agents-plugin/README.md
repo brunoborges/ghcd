@@ -1,8 +1,8 @@
-# ghcd — Claude Code Plugin
+# ghcd — Agentic CLI Plugin
 
-A [Claude Code Plugin](https://code.claude.com/docs/en/plugins) that installs and configures [ghcd](https://github.com/brunoborges/ghcd) — a caching proxy for the GitHub CLI (`gh`).
+A plugin for [Claude Code](https://code.claude.com/docs/en/plugins) and [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins) that installs and configures [ghcd](https://github.com/brunoborges/ghcd) — a caching proxy for the GitHub CLI (`gh`).
 
-Also compatible with [GitHub Copilot CLI](https://github.com/github/copilot-cli) and other agentic CLI runners that support the Claude Plugin format.
+Compatible with any agentic CLI runner that supports the [Claude Code Plugin](https://code.claude.com/docs/en/plugins) format.
 
 ## What it does
 
@@ -86,6 +86,12 @@ agents-plugin/
 - `gh` (GitHub CLI) must be installed and authenticated
 - macOS or Linux (amd64 or arm64)
 - `curl` and `tar` available in PATH
+
+## Learn more
+
+- [Claude Code Plugins documentation](https://code.claude.com/docs/en/plugins)
+- [GitHub Copilot CLI Plugins documentation](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins)
+- [ghcd project](https://github.com/brunoborges/ghcd)
 
 ## License
 
