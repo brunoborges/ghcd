@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/brunoborges/ghx/internal/client"
@@ -144,12 +145,12 @@ func handleDaemon(cfg *config.Config, args []string) {
 			fmt.Printf("ghx: daemon started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", cfg.SocketPath, cfg.DashboardPort)
 		} else {
 			// Foreground mode — exec the daemon directly
-			ghxdPath, err := findGHCD()
+			ghxdPath, err := findGHXD()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 				os.Exit(1)
 			}
-			syscall.Exec(ghxdPath, []string{"ghxd"}, os.Environ())
+			execReplace(ghxdPath, []string{"ghxd"}, os.Environ())
 		}
 
 	case "stop":
@@ -282,48 +283,27 @@ func printFormattedStats(data []byte) {
 	}
 }
 
-// startDaemon launches ghxd as a background process.
-func startDaemon(cfg *config.Config) error {
-	ghxdPath, err := findGHCD()
-	if err != nil {
-		return err
+// findGHXD locates the ghxd binary.
+func findGHXD() (string, error) {
+	suffix := ""
+	if runtime.GOOS == "windows" {
+		suffix = ".exe"
 	}
 
-	cmd := exec.Command(ghxdPath)
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
-
-	return cmd.Start()
-}
-
-// findGHCD locates the ghxd binary.
-func findGHCD() (string, error) {
 	// Check next to the ghx binary
 	exe, err := os.Executable()
 	if err == nil {
-		dir := exe[:strings.LastIndex(exe, "/")+1]
-		candidate := dir + "ghxd"
+		dir := filepath.Dir(exe)
+		candidate := filepath.Join(dir, "ghxd"+suffix)
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate, nil
 		}
 	}
 
 	// Check PATH
-	path, err := exec.LookPath("ghxd")
+	path, err := exec.LookPath("ghxd" + suffix)
 	if err != nil {
 		return "", fmt.Errorf("ghxd not found (install it next to ghx or in PATH)")
 	}
 	return path, nil
-}
-
-// execDirect runs gh directly (bypass daemon entirely).
-func execDirect(ghPath string, args []string) {
-	path, err := exec.LookPath(ghPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ghx: gh not found: %v\n", err)
-		os.Exit(1)
-	}
-	allArgs := append([]string{ghPath}, args...)
-	syscall.Exec(path, allArgs, os.Environ())
 }

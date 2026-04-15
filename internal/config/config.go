@@ -23,13 +23,12 @@ type Config struct {
 }
 
 func DefaultConfig() *Config {
-	home, _ := os.UserHomeDir()
-	ghxDir := filepath.Join(home, ".ghx")
+	ghxDir := defaultGHXDir()
 	return &Config{
 		TTL:             30 * time.Second,
 		TTLOverrides:    make(map[string]time.Duration),
 		MaxCacheEntries: 1000,
-		SocketPath:      filepath.Join(ghxDir, "ghxd.sock"),
+		SocketPath:      defaultSocketPath(ghxDir),
 		PIDFile:         filepath.Join(ghxDir, "ghxd.pid"),
 		AutoStart:       true,
 		DashboardPort:   9847,
@@ -42,12 +41,8 @@ func DefaultConfig() *Config {
 func Load() (*Config, error) {
 	cfg := DefaultConfig()
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return cfg, nil
-	}
-
-	configPath := filepath.Join(home, ".ghx", "config.yaml")
+	ghxDir := defaultGHXDir()
+	configPath := filepath.Join(ghxDir, "config.yaml")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -80,11 +75,7 @@ func Load() (*Config, error) {
 
 // GHCDir returns the ghx configuration directory, creating it if needed.
 func GHCDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	dir := filepath.Join(home, ".ghx")
+	dir := defaultGHXDir()
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", err
 	}
