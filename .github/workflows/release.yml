@@ -24,9 +24,14 @@ jobs:
         run: go test -race ./...
 
       - name: Build binaries
+        id: build
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
+          VERSION_NUM=${VERSION#v}
           LDFLAGS="-s -w -X main.version=${VERSION}"
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_num=${VERSION_NUM}" >> "$GITHUB_OUTPUT"
 
           platforms=(
             "darwin/arm64"
@@ -55,3 +60,83 @@ jobs:
         with:
           generate_release_notes: true
           files: dist/*.tar.gz
+
+      - name: Compute checksums
+        id: checksums
+        run: |
+          cd dist
+          for f in *.tar.gz; do
+            sha256sum "$f"
+          done | tee checksums.txt
+
+          echo "SHA_DARWIN_ARM64=$(grep darwin-arm64 checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "SHA_DARWIN_AMD64=$(grep darwin-amd64 checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "SHA_LINUX_AMD64=$(grep linux-amd64 checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "SHA_LINUX_ARM64=$(grep linux-arm64 checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.build.outputs.version }}
+          VERSION_NUM=${{ steps.build.outputs.version_num }}
+          BASE_URL="https://github.com/brunoborges/ghcd/releases/download/${VERSION}"
+
+          SHA_DARWIN_ARM64=${{ steps.checksums.outputs.SHA_DARWIN_ARM64 }}
+          SHA_DARWIN_AMD64=${{ steps.checksums.outputs.SHA_DARWIN_AMD64 }}
+          SHA_LINUX_AMD64=${{ steps.checksums.outputs.SHA_LINUX_AMD64 }}
+          SHA_LINUX_ARM64=${{ steps.checksums.outputs.SHA_LINUX_ARM64 }}
+
+          cat > ghcd.rb << FORMULA
+          class Ghcd < Formula
+            desc "GitHub CLI Cache Proxy — caching daemon for gh to prevent API rate limiting"
+            homepage "https://github.com/brunoborges/ghcd"
+            version "${VERSION_NUM}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "${BASE_URL}/ghcd-darwin-arm64.tar.gz"
+                sha256 "${SHA_DARWIN_ARM64}"
+              else
+                url "${BASE_URL}/ghcd-darwin-amd64.tar.gz"
+                sha256 "${SHA_DARWIN_AMD64}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "${BASE_URL}/ghcd-linux-arm64.tar.gz"
+                sha256 "${SHA_LINUX_ARM64}"
+              else
+                url "${BASE_URL}/ghcd-linux-amd64.tar.gz"
+                sha256 "${SHA_LINUX_AMD64}"
+              end
+            end
+
+            def install
+              bin.install "ghc"
+              bin.install "ghcd"
+            end
+
+            test do
+              assert_match "ghcd", shell_output("#{bin}/ghcd --help")
+            end
+          end
+          FORMULA
+
+          sed -i 's/^          //' ghcd.rb
+
+          echo "Generated formula:"
+          cat ghcd.rb
+
+          # Clone the tap, update formula, push
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/brunoborges/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          cp ghcd.rb tap/Formula/ghcd.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/ghcd.rb
+          git commit -m "Update ghcd to ${VERSION}"
+          git push
