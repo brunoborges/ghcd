@@ -42,25 +42,36 @@ try {
     Copy-Item (Join-Path $TmpDir 'ghx.exe') $InstallDir -Force
     Copy-Item (Join-Path $TmpDir 'ghxd.exe') $InstallDir -Force
 
-    # Install gh.cmd shim from archive (if included) or generate it
-    $ShimSrc = Join-Path $TmpDir 'gh.cmd'
+    # Install gh.cmd shim only if no real gh.exe is available on the system
     $ShimDst = Join-Path $InstallDir 'gh.cmd'
-    if (Test-Path $ShimSrc) {
-        Copy-Item $ShimSrc $InstallDir -Force
-    } elseif (-not (Test-Path $ShimDst) -or (Select-String -Path $ShimDst -Pattern 'ghx-shim' -Quiet)) {
-        @"
+    $RealGhExists = $false
+    $GhCmd = Get-Command gh.exe -ErrorAction SilentlyContinue
+    if ($GhCmd) { $RealGhExists = $true }
+
+    if ($RealGhExists) {
+        Write-Host "Real gh.exe found on the system - skipping gh shim installation"
+        Write-Host "  Use 'ghx' instead of 'gh' to benefit from caching."
+    } else {
+        $ShimSrc = Join-Path $TmpDir 'gh.cmd'
+        if (Test-Path $ShimSrc) {
+            Copy-Item $ShimSrc $InstallDir -Force
+        } elseif (-not (Test-Path $ShimDst) -or (Select-String -Path $ShimDst -Pattern 'ghx-shim' -Quiet)) {
+            @"
 @echo off
 rem ghx-shim: this script redirects gh commands through ghx for caching
 ghx %*
 "@ | Set-Content -Path $ShimDst -Encoding ASCII
-    } else {
-        Write-Host "Existing gh.cmd found at $ShimDst - not overwriting"
+        } else {
+            Write-Host "Existing gh.cmd found at $ShimDst - not overwriting"
+        }
     }
 
     Write-Host ''
     Write-Host "ghx  installed to $InstallDir\ghx.exe"
     Write-Host "ghxd installed to $InstallDir\ghxd.exe"
-    Write-Host "gh   shim installed to $ShimDst (redirects to ghx)"
+    if (-not $RealGhExists) {
+        Write-Host "gh   shim installed to $ShimDst (redirects to ghx)"
+    }
 
     # Add to PATH if not already present
     $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')

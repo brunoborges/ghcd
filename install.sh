@@ -60,7 +60,19 @@ echo ""
 echo "✓ ghx  installed to ${INSTALL_DIR}/ghx"
 echo "✓ ghxd installed to ${INSTALL_DIR}/ghxd"
 
-# Install gh shim alongside ghx
+# Check if a real gh CLI binary (not a ghx shim) exists anywhere on the system
+has_real_gh() {
+  local IFS=':'
+  for dir in $PATH; do
+    [ -x "$dir/gh" ] || continue
+    # Skip ghx shims (marker check)
+    grep -q "ghx-shim" "$dir/gh" 2>/dev/null && continue
+    return 0
+  done
+  return 1
+}
+
+# Install gh shim alongside ghx only if no real gh is available
 GH_SHIM='#!/bin/sh
 # ghx-shim: this script redirects gh commands through ghx for caching
 exec ghx "$@"'
@@ -76,17 +88,12 @@ install_shim() {
   echo "✓ gh   shim installed to ${INSTALL_DIR}/gh (redirects to ghx)"
 }
 
-if [ -f "${INSTALL_DIR}/gh" ]; then
-  if grep -q "ghx-shim" "${INSTALL_DIR}/gh" 2>/dev/null; then
-    # Existing shim — update it
-    install_shim
-  else
-    echo "⚠ Existing gh binary found at ${INSTALL_DIR}/gh — not overwriting"
-    echo "  All gh calls already benefit from caching when invoked as 'ghx' instead."
-    echo "  To route 'gh' through ghx, back up and replace it:"
-    echo "    mv ${INSTALL_DIR}/gh ${INSTALL_DIR}/gh.real"
-    echo "    printf '#!/bin/sh\\n# ghx-shim\\nexec ghx \"\$@\"\\n' > ${INSTALL_DIR}/gh && chmod +x ${INSTALL_DIR}/gh"
-  fi
+if has_real_gh; then
+  echo "ℹ Real gh binary found on the system — skipping gh shim installation"
+  echo "  Use 'ghx' instead of 'gh' to benefit from caching."
+elif [ -f "${INSTALL_DIR}/gh" ] && ! grep -q "ghx-shim" "${INSTALL_DIR}/gh" 2>/dev/null; then
+  echo "⚠ Existing gh binary found at ${INSTALL_DIR}/gh — not overwriting"
+  echo "  Use 'ghx' instead of 'gh' to benefit from caching."
 else
   install_shim
 fi

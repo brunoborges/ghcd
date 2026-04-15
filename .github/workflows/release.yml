@@ -132,22 +132,31 @@ jobs:
               end
             end
 
-            conflicts_with "gh", because: "ghx includes a gh shim that routes all gh calls through the caching proxy"
-
             def install
               bin.install "ghx"
               bin.install "ghxd"
-              bin.install "gh"
+            end
+
+            def post_install
+              # Only install gh shim if no real gh binary is available on the system
+              return if which("gh")
+
+              (bin/"gh").write <<~SH
+                #!/bin/sh
+                # ghx-shim: this script redirects gh commands through ghx for caching
+                exec ghx "$@"
+              SH
+              (bin/"gh").chmod 0755
             end
 
             def caveats
               <<~EOS
-                ghx includes a 'gh' shim that routes all GitHub CLI calls through
-                the caching proxy. The real GitHub CLI will be auto-downloaded on
-                first use if not already present.
+                ghx caches GitHub CLI calls to prevent API rate limiting.
+                Use 'ghx' instead of 'gh' to benefit from caching.
 
-                If you previously had 'gh' installed via Homebrew, ghx replaces it.
-                To revert: brew uninstall ghx && brew install gh
+                If no 'gh' binary was found during installation, a lightweight
+                shim was installed that routes 'gh' calls through ghx.
+                The real GitHub CLI will be auto-downloaded on first use.
               EOS
             end
 
