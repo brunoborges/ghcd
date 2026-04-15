@@ -35,6 +35,26 @@ func main() {
 	case "xversion":
 		fmt.Printf("ghx version %s\n", version)
 		return
+	case "xhelp":
+		fmt.Println("ghx — GitHub CLI Cache Proxy")
+		fmt.Printf("Version: %s\n", version)
+		fmt.Println()
+		fmt.Println("Usage: ghx [flags] <gh command> [args...]")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  --no-cache    Bypass cache for this request")
+		fmt.Println("  --ttl <sec>   Override TTL for this request")
+		fmt.Println()
+		fmt.Println("Commands (x-prefixed to avoid conflicts with gh):")
+		fmt.Println("  xversion      Show ghx version")
+		fmt.Println("  xhelp         Show this help")
+		fmt.Println("  xdaemon       Manage the ghxd daemon (start|stop|status|restart)")
+		fmt.Println("  xcache        Manage the cache (stats|flush|keys)")
+		fmt.Println()
+		fmt.Println("All other arguments are forwarded to gh via the caching daemon.")
+		fmt.Printf("Config: ~/.ghx/\n")
+		fmt.Printf("Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)
+		return
 	case "xdaemon":
 		handleDaemon(cfg, args[1:])
 		return

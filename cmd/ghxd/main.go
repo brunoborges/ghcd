@@ -26,15 +26,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(os.Args) > 1 && os.Args[1] == "--help" {
+	if len(os.Args) > 1 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
 		fmt.Println("ghxd — GitHub CLI Cache Proxy Daemon")
 		fmt.Printf("Version: %s\n", version)
 		fmt.Println()
-		fmt.Println("Usage: ghxd [--help]")
+		fmt.Println("Usage: ghxd [--help | --version]")
+		fmt.Println()
+		fmt.Println("Options:")
+		fmt.Println("  --help, -h       Show this help")
+		fmt.Println("  --version, -v    Show version")
 		fmt.Println()
 		fmt.Printf("  Socket:    %s\n", cfg.SocketPath)
 		fmt.Printf("  Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)
 		fmt.Printf("  PID file:  %s\n", cfg.PIDFile)
+		fmt.Println()
+		fmt.Println("The daemon is typically managed via: ghx xdaemon start|stop|status|restart")
 		os.Exit(0)
 	}
 
