@@ -1,0 +1,14 @@
+# bin/
+bin/
+
+# Daemon runtime files
+*.sock
+*.pid
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp

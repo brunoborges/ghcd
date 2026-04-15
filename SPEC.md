@@ -1,0 +1,419 @@
+# ghc — GitHub CLI Cache Proxy
+
+## Problem
+
+The GitHub CLI (`gh`) has no client-side caching. When multiple AI agents (Copilot CLI, coding agents, MCP servers) make frequent `gh` calls, they quickly exhaust GitHub API rate limits. Identical requests for the same PR list, issue details, or repo metadata are repeated seconds apart with no reuse.
+
+## Solution
+
+**ghc** is a caching proxy for the `gh` CLI, consisting of:
+
+- **`ghcd`** — a background daemon that executes `gh` commands, caches results, and serves cached responses
+- **`ghc`** — a thin CLI client that forwards commands to the daemon and returns results
+
+The system uses an **allowlist** of known-safe read-only commands, **request coalescing** to prevent duplicate in-flight calls, and a **configurable TTL** (default: 30s). Commands not on the allowlist are passed through directly to `gh` without caching.
+
+## Architecture
+
+```
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│ Agent 1 │  │ Agent 2 │  │ Agent 3 │
+│ (ghc)   │  │ (ghc)   │  │ (ghc)   │
+└────┬────┘  └────┬────┘  └────┬────┘
+     │            │            │
+     └────────────┼────────────┘
+                  │ Unix Domain Socket
+           ┌──────┴──────┐
+           │    ghcd     │
+           │  (daemon)   │
+           ├─────────────┤
+           │ Cache Store │  (in-memory, LRU)
+           │ Singleflight│  (request coalescing)
+           │ Metrics     │
+           │ Allowlist   │
+           └──────┬──────┘
+                  │ exec
+              ┌───┴───┐
+              │  gh   │
+              └───────┘
+```
+
+## Language
+
+**Go**. Same language as `gh` itself. Excellent for CLI tools, daemon processes, and HTTP servers. Standard library covers Unix sockets, HTTP, JSON, and concurrency primitives. Easy cross-compilation for macOS/Linux.
+
+## Core Concepts
+
+### Cache Key
+
+A cache key is a composite of the **full execution context**, not just command arguments. This prevents wrong cache hits across repos, users, or output formats.
+
+```
+CacheKey = hash(
+    gh_command,          // normalized: sorted flags, resolved args
+    resolved_host,       // github.com or GHE hostname
+    resolved_repo,       // owner/name (from CWD or GH_REPO)
+    resolved_branch,     // current branch (when command depends on it)
+    auth_token_hash,     // SHA256 of token (not the token itself)
+    output_format,       // --json fields, --jq, --template, or default
+)
+```
+
+**Context resolution**: The client (`ghc`) resolves the execution context before sending to the daemon:
+- Repo: `git remote get-url origin` or `GH_REPO` env var
+- Branch: `git symbolic-ref --short HEAD`
+- Host: `GH_HOST` env var or default from `gh` config
+- Auth: token fingerprint from `gh auth token`
+
+If the context cannot be reliably resolved for a given command, **the command is not cached**.
+
+### Cacheable Command Allowlist
+
+Only explicitly allowlisted commands are cached. Everything else passes through directly to `gh`.
+
+**Phase 1 allowlist:**
+
+| Command Pattern              | Notes                                    |
+|------------------------------|------------------------------------------|
+| `gh pr list`                 | With any filter/format flags             |
+| `gh pr view <number>`        | Including `--json`, `--comments`         |
+| `gh pr status`               |                                          |
+| `gh pr checks <number>`      |                                          |
+| `gh pr diff <number>`        |                                          |
+| `gh issue list`              | With any filter/format flags             |
+| `gh issue view <number>`     | Including `--json`, `--comments`         |
+| `gh issue status`            |                                          |
+| `gh repo view [repo]`        |                                          |
+| `gh run list`                |                                          |
+| `gh run view <id>`           |                                          |
+| `gh workflow list`           |                                          |
+| `gh workflow view <id>`      |                                          |
+| `gh release list`            |                                          |
+| `gh release view <tag>`      |                                          |
+| `gh search repos <query>`    |                                          |
+| `gh search issues <query>`   |                                          |
+| `gh search prs <query>`      |                                          |
+| `gh api <GET endpoint>`      | REST GET only; GraphQL via opt-in config |
+| `gh label list`              |                                          |
+
+The allowlist is configurable — users can add/remove patterns.
+
+### Commands That Are NEVER Cached
+
+- Any mutating command (`create`, `edit`, `delete`, `merge`, `close`, `reopen`, `comment`, `review`)
+- Interactive commands (anything that prompts for input or launches a browser)
+- Streaming commands (`gh run watch`, `gh codespace ssh`)
+- Auth commands (`gh auth`)
+- `gh api` with methods other than GET (unless explicitly opted in for read-only GraphQL)
+
+These commands are **passed through directly** to `gh` with no daemon involvement, preserving TTY, stdin, and interactive behavior.
+
+### Request Coalescing (Singleflight)
+
+When multiple clients request the same cache key simultaneously and it's a miss, only **one** `gh` execution occurs. All waiting clients receive the same result. This is critical for the multi-agent scenario where 5+ agents may request the same PR list within milliseconds.
+
+```
+Agent1 → ghcd: "gh pr list" (cache miss, starts gh execution)
+Agent2 → ghcd: "gh pr list" (same key, joins in-flight request)
+Agent3 → ghcd: "gh pr list" (same key, joins in-flight request)
+           ↓
+       gh pr list  ← single execution
+           ↓
+All three agents get the same response
+```
+
+### Cache Invalidation
+
+**Coarse-grained, namespace-based invalidation.** After any mutating command passes through the daemon, all cached entries for the same `{host, repo, resource_type}` namespace are invalidated.
+
+Resource types: `pr`, `issue`, `run`, `workflow`, `release`, `label`, `repo`, `api`.
+
+Example: After `gh pr merge #42`, all cached entries tagged `{github.com, owner/repo, pr}` are evicted.
+
+This is intentionally conservative — it may over-invalidate, but it will never serve stale data after mutations.
+
+### Cached Response Format
+
+Each cached entry stores:
+
+```go
+type CachedResponse struct {
+    Stdout   []byte
+    Stderr   []byte
+    ExitCode int
+    CachedAt time.Time
+    TTL      time.Duration
+    Key      string
+    Context  ExecutionContext
+}
+```
+
+The client reproduces the exact observed behavior: writing stdout, stderr, and returning the original exit code.
+
+## CLI Interface
+
+### Drop-in Usage
+
+```bash
+# Instead of:
+gh pr list --repo owner/repo --json number,title
+
+# Use:
+ghc pr list --repo owner/repo --json number,title
+```
+
+### Daemon Management
+
+```bash
+ghc daemon start          # Start daemon (foreground, for debugging)
+ghc daemon start -d       # Start daemon (background, detached)
+ghc daemon stop           # Graceful shutdown
+ghc daemon status         # Show PID, uptime, cache stats summary
+ghc daemon restart        # Stop + start
+```
+
+### Cache Management
+
+```bash
+ghc cache flush           # Flush all cached entries
+ghc cache flush pr        # Flush all PR-related entries
+ghc cache flush --repo owner/repo  # Flush entries for a specific repo
+ghc cache stats           # Show hit rate, per-command breakdown
+ghc cache keys            # List currently cached keys (for debugging)
+```
+
+### Configuration
+
+```bash
+ghc config set ttl 60             # Set default TTL to 60 seconds
+ghc config set ttl.pr.list 120    # Per-command TTL override
+ghc config set max-cache-size 500 # Max cached entries (LRU eviction)
+ghc config set dashboard.port 9876
+ghc config get ttl
+ghc config list
+```
+
+### Per-Command Overrides
+
+```bash
+ghc --no-cache pr list            # Bypass cache for this call
+ghc --ttl 120 pr list             # Override TTL for this call
+GHC_TTL=120 ghc pr list           # Same, via env var
+GHC_NO_CACHE=1 ghc pr list        # Same as --no-cache, via env var
+```
+
+## Daemon Details
+
+### Auto-Start
+
+When `ghc` is invoked and no daemon is running, it **automatically starts one** in the background. This makes `ghc` a true drop-in replacement — no setup required.
+
+### IPC: Unix Domain Socket
+
+- Path: `$XDG_RUNTIME_DIR/ghc/ghcd.sock` or `~/.ghc/ghcd.sock`
+- Permissions: `0600` (owner-only)
+- Protocol: length-prefixed JSON messages over the socket
+
+The client sends a request containing the command, arguments, and resolved execution context. The daemon responds with the cached or fresh result.
+
+### PID File
+
+- Path: `~/.ghc/ghcd.pid`
+- Used for daemon lifecycle management and stale process detection
+
+### Graceful Shutdown
+
+On SIGTERM/SIGINT: stop accepting new connections, wait for in-flight requests (up to 5s), then exit. Metrics are flushed to disk before exit.
+
+### In-Memory Cache
+
+Cache is in-memory only. Lost on daemon restart. This is acceptable because:
+- TTLs are short (30s default)
+- Daemon restarts are rare
+- Disk-based caching adds complexity without proportional benefit for this use case
+
+### LRU Eviction
+
+Default max entries: 1000 (configurable). When exceeded, least-recently-used entries are evicted. Each entry is relatively small (a few KB of JSON output).
+
+## Metrics & Observability
+
+### Tracked Metrics
+
+The daemon tracks the following internally, exposed via `ghc cache stats` and the web dashboard:
+
+- **Total requests** (and per-command)
+- **Cache hits / misses / passthrough** (counts and percentages)
+- **Coalesced requests** (served via singleflight)
+- **Cache size** (current entries vs max)
+- **Cache evictions and invalidations**
+- **Response latency** (cached vs uncached, per-command)
+- **Inter-request intervals** (per cache key, for TTL analysis)
+
+### CLI Stats
+
+```bash
+$ ghc cache stats
+Uptime:          2h 34m
+Total Requests:  1,247
+Cache Hits:      891 (71.4%)
+Cache Misses:    203 (16.3%)
+Passthrough:     153 (12.3%)
+Coalesced:       87
+Cache Size:      142 / 1000 entries
+
+Top Commands:
+  gh pr list           412 hits / 48 misses  (89.6%)
+  gh issue view        198 hits / 32 misses  (86.1%)
+  gh pr view           143 hits / 67 misses  (68.1%)
+  gh api /repos/...     88 hits / 31 misses  (73.9%)
+  gh run list           50 hits / 25 misses  (66.7%)
+```
+
+### Web Dashboard
+
+Served by the daemon at `http://localhost:9847/` — always available when the daemon is running.
+
+A single self-contained HTML page (embedded in the Go binary via `embed`) with no external dependencies. Uses vanilla JS and inline CSS. Auto-refreshes metrics via a simple JSON endpoint (`GET /api/stats`).
+
+**Dashboard sections:**
+
+1. **Overview** — real-time hit rate %, total requests, cache size, daemon uptime
+2. **Per-Command Breakdown** — sortable table showing each command with hit count, miss count, hit rate, and average latency
+3. **Request Log** — scrollable live tail of recent requests (last 200) showing timestamp, command, cache hit/miss, and latency
+4. **TTL Analysis** — for each command, shows the median time between repeated identical requests, helping users pick the right TTL
+
+**JSON API** (consumed by the dashboard, also useful for scripting):
+
+```
+GET /api/stats          → { uptime, total, hits, misses, passthrough, coalesced, cache_size, commands: [...] }
+GET /api/log?limit=200  → [ { timestamp, command, cache_result, latency_ms }, ... ]
+```
+
+## Configuration File
+
+Location: `~/.ghc/config.yaml`
+
+```yaml
+# Default TTL for all cached commands
+ttl: 30s
+
+# Per-command TTL overrides
+ttl_overrides:
+  pr_list: 60s
+  pr_view: 30s
+  issue_list: 60s
+  run_list: 15s
+  api_get: 30s
+
+# Cache limits
+max_cache_entries: 1000
+
+# Daemon settings
+socket_path: ~/.ghc/ghcd.sock
+pid_file: ~/.ghc/ghcd.pid
+auto_start: true
+
+# Custom allowlist additions
+additional_cacheable:
+  - "gh status"
+
+# Metrics
+metrics:
+  prometheus: false
+  dashboard: false
+  port: 9847
+
+# gh binary path (auto-detected if not set)
+gh_path: /opt/homebrew/bin/gh
+
+# Logging
+log_level: info
+log_file: ~/.ghc/ghcd.log
+```
+
+## Security Considerations
+
+1. **Socket permissions**: Unix socket is created with `0600` — only the owning user can connect
+2. **No token storage**: The daemon never stores auth tokens; it delegates to `gh` which manages its own auth. Only a SHA256 fingerprint of the token is used in cache keys
+3. **No cross-user sharing**: Each user runs their own daemon with their own cache
+4. **Cached data**: Responses may contain private repo data. The in-memory cache is ephemeral and protected by socket permissions
+5. **Dashboard binding**: Metrics/dashboard HTTP server binds to `127.0.0.1` only
+6. **Log hygiene**: Command arguments are logged, but response bodies are not logged by default
+
+## Error Handling
+
+- **Daemon unavailable**: Auto-start the daemon, then retry. If auto-start itself fails (e.g., socket conflict, permissions), fall back to executing `gh` directly (never block the user)
+- **`gh` execution error**: Cache the error response too (exit code, stderr) for the TTL duration to avoid hammering a failing endpoint
+- **Socket timeout**: 5-second timeout on client→daemon communication; fall back to direct `gh` on timeout
+- **Cache corruption**: In-memory only, so restart the daemon to clear
+
+## Project Structure
+
+```
+ghc/
+├── cmd/
+│   ├── ghc/           # CLI client entry point
+│   │   └── main.go
+│   └── ghcd/          # Daemon entry point
+│       └── main.go
+├── internal/
+│   ├── cache/         # LRU cache with TTL
+│   │   ├── cache.go
+│   │   └── cache_test.go
+│   ├── client/        # Unix socket client
+│   │   ├── client.go
+│   │   └── client_test.go
+│   ├── context/       # Execution context resolution
+│   │   ├── resolve.go
+│   │   └── resolve_test.go
+│   ├── daemon/        # Daemon server, request handling
+│   │   ├── server.go
+│   │   ├── handler.go
+│   │   └── server_test.go
+│   ├── allowlist/     # Command classification
+│   │   ├── allowlist.go
+│   │   └── allowlist_test.go
+│   ├── executor/      # gh command execution
+│   │   ├── executor.go
+│   │   └── executor_test.go
+│   ├── metrics/       # Counters, stats, JSON API
+│   │   ├── metrics.go
+│   │   └── metrics_test.go
+│   ├── singleflight/  # Request coalescing
+│   │   └── singleflight.go
+│   ├── config/        # Configuration loading
+│   │   ├── config.go
+│   │   └── config_test.go
+│   └── dashboard/     # Web dashboard (Phase 2)
+│       ├── dashboard.go
+│       └── static/
+├── go.mod
+├── go.sum
+├── Makefile
+└── README.md
+```
+
+## Phased Delivery
+
+### Phase 1 — Core Caching + Dashboard
+
+- `ghc` client and `ghcd` daemon
+- Unix domain socket IPC
+- Allowlisted command caching with context-aware keys
+- Configurable TTL (default 30s)
+- Singleflight request coalescing
+- Coarse-grained invalidation after mutations
+- Auto-start daemon, fallback to direct `gh` on failure
+- `ghc cache stats` for CLI metrics
+- `ghc daemon start/stop/status`
+- Config file support
+- Web dashboard with per-command stats, request log, and TTL analysis
+- JSON API for scripting
+
+### Phase 2 — Advanced Features
+
+- Negative caching configuration (cache 404s, rate limit responses)
+- Cache warming (pre-fetch commonly used commands on daemon start)
+- `gh` extension integration (`gh cache` as a native extension)
+- Shell alias installer (`ghc install-alias` adds `alias gh=ghc` to shell rc)
