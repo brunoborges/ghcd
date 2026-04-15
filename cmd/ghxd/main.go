@@ -21,6 +21,11 @@ func main() {
 	log.SetPrefix("ghxd: ")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmsgprefix)
 
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Printf("ghxd version %s\n", version)
+		os.Exit(0)
+	}
+
 	if len(os.Args) > 1 && os.Args[1] == "--help" {
 		fmt.Println("ghxd — GitHub CLI Cache Proxy Daemon")
 		fmt.Printf("Version: %s\n", version)

@@ -16,6 +16,8 @@ import (
 	"github.com/brunoborges/ghx/internal/protocol"
 )
 
+var version = "dev"
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -30,6 +32,9 @@ func main() {
 
 	// Handle ghx-specific subcommands (x-prefixed to avoid conflicts with gh)
 	switch args[0] {
+	case "xversion":
+		fmt.Printf("ghx version %s\n", version)
+		return
 	case "xdaemon":
 		handleDaemon(cfg, args[1:])
 		return
