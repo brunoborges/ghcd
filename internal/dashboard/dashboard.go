@@ -67,6 +67,7 @@ const dashboardHTML = `<!DOCTYPE html>
   .log-entry:last-child { border-bottom: none; }
   .log-time { color: var(--text-dim); min-width: 80px; }
   .log-cmd { flex: 1; }
+  .log-key { color: var(--text-dimmer); min-width: 90px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default; }
   .log-latency { color: var(--text-dim); min-width: 70px; text-align: right; }
 
   .refresh-info { color: var(--text-dim); font-size: 12px; text-align: right; margin-bottom: 8px; }
@@ -179,6 +180,7 @@ function renderLog(entries) {
     div.innerHTML =
       '<span class="log-time">' + fmtTime(e.timestamp) + '</span>' +
       '<span class="log-cmd">' + e.command.replace(/_/g, ' ') + '</span>' +
+      '<span class="log-key" title="' + (e.cache_key || '') + '">' + (e.cache_key ? e.cache_key.slice(0, 12) + '…' : '—') + '</span>' +
       '<span class="badge ' + e.result + '">' + e.result + '</span>' +
       '<span class="log-latency">' + fmtMs(e.latency_ms) + '</span>';
     container.appendChild(div);
