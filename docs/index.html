@@ -540,28 +540,34 @@ curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | 
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-content">
-          <h3>Install the plugin</h3>
-          <p>Run <code style="color:var(--green)">/plugin install ghcd</code> in your agent's CLI, or use <code style="color:var(--green)">claude --plugin-dir ./agents-plugin</code> for local testing.</p>
+          <h3>Add the marketplace</h3>
+          <p>
+            <strong>Claude Code:</strong> <code style="color:var(--green)">/plugin marketplace add brunoborges/ghcd-plugins</code><br>
+            <strong>Copilot CLI:</strong> <code style="color:var(--green)">copilot plugin marketplace add brunoborges/ghcd-plugins</code>
+          </p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-content">
-          <h3>Binaries are lazy-installed</h3>
-          <p>On first use, the plugin downloads and installs <code>ghc</code> and <code>ghcd</code> to a persistent data directory. No manual setup needed.</p>
+          <h3>Install the plugin</h3>
+          <p>
+            <strong>Both:</strong> <code style="color:var(--green)">/plugin install ghcd@ghcd-plugins</code><br>
+            <strong>Copilot CLI direct:</strong> <code style="color:var(--green)">copilot plugin install brunoborges/ghcd:agents-plugin</code>
+          </p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-content">
           <h3>Agent learns to use <code style="color:var(--green)">ghc</code></h3>
-          <p>A built-in skill teaches the agent to prefer <code>ghc</code> for all GitHub CLI commands. Every <code>gh</code> call goes through the caching proxy automatically.</p>
+          <p>A built-in skill teaches the agent to prefer <code>ghc</code> for all GitHub CLI commands. Binaries are lazy-installed on first use — no manual setup needed.</p>
         </div>
       </div>
     </div>
     <div style="text-align:center; margin-top: 36px;">
       <a href="https://github.com/brunoborges/ghcd/tree/main/agents-plugin" class="btn btn-secondary" target="_blank" style="margin-right:12px;">Plugin Docs</a>
-      <a href="https://github.com/brunoborges/ghcd/releases?q=plugin" class="btn btn-primary" target="_blank">Download Plugin</a>
+      <a href="https://github.com/brunoborges/ghcd-plugins" class="btn btn-primary" target="_blank">Marketplace Repo</a>
     </div>
   </div>
 </section>

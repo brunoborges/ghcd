@@ -68,13 +68,30 @@ sudo cp bin/ghc bin/ghcd /usr/local/bin/
 
 ### Agents Plugin (Claude Code & Copilot CLI)
 
-If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins), install the plugin and your agent will automatically prefer `ghc` over `gh`:
+If you use [Claude Code](https://code.claude.com/docs/en/plugins) or [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins), install the plugin and your agent will automatically prefer `ghc` over `gh`.
 
-```
-/plugin install ghcd
+**Claude Code:**
+
+```bash
+# Add the marketplace (one-time)
+/plugin marketplace add brunoborges/ghcd-plugins
+
+# Install the plugin
+/plugin install ghcd@ghcd-plugins
 ```
 
-Or for local development / testing:
+**GitHub Copilot CLI:**
+
+```bash
+# Option 1: Via marketplace
+copilot plugin marketplace add brunoborges/ghcd-plugins
+copilot plugin install ghcd@ghcd-plugins
+
+# Option 2: Direct install (no marketplace needed)
+copilot plugin install brunoborges/ghcd:agents-plugin
+```
+
+**Local development / testing:**
 
 ```bash
 claude --plugin-dir ./agents-plugin
