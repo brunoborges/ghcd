@@ -8,17 +8,16 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/brunoborges/ghx/internal/allowlist"
 	"github.com/brunoborges/ghx/internal/cache"
 	"github.com/brunoborges/ghx/internal/config"
 	"github.com/brunoborges/ghx/internal/dashboard"
+	"github.com/brunoborges/ghx/internal/ipc"
 	"github.com/brunoborges/ghx/internal/metrics"
 	"github.com/brunoborges/ghx/internal/protocol"
 )
@@ -61,20 +60,20 @@ func (s *Server) Run() error {
 		return fmt.Errorf("create socket dir: %w", err)
 	}
 
-	// Remove stale socket
-	os.Remove(s.cfg.SocketPath)
+	// Remove stale socket (no-op on Windows)
+	removeStaleSocket(s.cfg.SocketPath)
 
-	// Start Unix socket listener
-	ln, err := net.Listen("unix", s.cfg.SocketPath)
+	// Start IPC listener (Unix socket or Windows named pipe)
+	ln, err := ipc.Listen(s.cfg.SocketPath)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
 	s.ln = ln
 
-	// Set socket permissions
-	if err := os.Chmod(s.cfg.SocketPath, 0600); err != nil {
+	// Set socket permissions (no-op on Windows)
+	if err := setSocketPermissions(s.cfg.SocketPath); err != nil {
 		ln.Close()
-		return fmt.Errorf("chmod socket: %w", err)
+		return fmt.Errorf("set socket permissions: %w", err)
 	}
 
 	// Write PID file
@@ -89,7 +88,7 @@ func (s *Server) Run() error {
 
 	// Handle signals
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	notifyShutdownSignals(sigCh)
 
 	go func() {
 		select {

@@ -2,13 +2,13 @@ package client
 
 import (
 	"fmt"
-	"net"
 	"time"
 
+	"github.com/brunoborges/ghx/internal/ipc"
 	"github.com/brunoborges/ghx/internal/protocol"
 )
 
-// Client communicates with the ghxd daemon over a Unix socket.
+// Client communicates with the ghxd daemon over IPC (Unix socket or Windows named pipe).
 type Client struct {
 	socketPath string
 	timeout    time.Duration
@@ -24,7 +24,7 @@ func New(socketPath string) *Client {
 
 // Send sends a request to the daemon and returns the response.
 func (c *Client) Send(req *protocol.Request) (*protocol.Response, error) {
-	conn, err := net.DialTimeout("unix", c.socketPath, c.timeout)
+	conn, err := ipc.Dial(c.socketPath, c.timeout)
 	if err != nil {
 		return nil, fmt.Errorf("connect to daemon: %w", err)
 	}
@@ -46,7 +46,7 @@ func (c *Client) Send(req *protocol.Request) (*protocol.Response, error) {
 
 // IsRunning checks if the daemon is listening on its socket.
 func (c *Client) IsRunning() bool {
-	conn, err := net.DialTimeout("unix", c.socketPath, 500*time.Millisecond)
+	conn, err := ipc.Dial(c.socketPath, 500*time.Millisecond)
 	if err != nil {
 		return false
 	}
