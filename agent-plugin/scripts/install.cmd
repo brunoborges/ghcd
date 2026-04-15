@@ -55,21 +55,26 @@ mkdir "%INSTALL_DIR%" 2>nul
 copy /y "%TMPDIR%\ghx.exe" "%INSTALL_DIR%\" >nul
 copy /y "%TMPDIR%\ghxd.exe" "%INSTALL_DIR%\" >nul
 
-rem Install gh.cmd shim from archive (if included) or generate it
-if exist "%TMPDIR%\gh.cmd" (
-    copy /y "%TMPDIR%\gh.cmd" "%INSTALL_DIR%\" >nul
+rem Install gh.cmd shim only if no real gh.exe is available on the system
+where gh.exe >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo ghxd-install: real gh.exe found on system, skipping shim 1>&2
 ) else (
-    (
-        echo @echo off
-        echo rem ghx-shim: this script redirects gh commands through ghx for caching
-        echo ghx %%*
-    ) > "%INSTALL_DIR%\gh.cmd"
+    if exist "%TMPDIR%\gh.cmd" (
+        copy /y "%TMPDIR%\gh.cmd" "%INSTALL_DIR%\" >nul
+    ) else (
+        (
+            echo @echo off
+            echo rem ghx-shim: this script redirects gh commands through ghx for caching
+            echo ghx %%*
+        ) > "%INSTALL_DIR%\gh.cmd"
+    )
 )
 
 rem Record installed version
 echo %VERSION%> "%INSTALL_DIR%\.ghx-version"
 
-echo ghxd-install: installed ghx, ghxd, and gh shim %VERSION% to %INSTALL_DIR% 1>&2
+echo ghxd-install: installed ghx and ghxd %VERSION% to %INSTALL_DIR% 1>&2
 
 rem Cleanup
 rmdir /s /q "%TMPDIR%" 2>nul
