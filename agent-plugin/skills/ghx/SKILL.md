@@ -1,5 +1,5 @@
 ---
-name: ghxd
+name: ghx
 description: >
   MANDATORY: Always use `ghx` instead of `gh` for every GitHub CLI command.
   Never invoke `gh` directly. ghx is a drop-in replacement that caches
