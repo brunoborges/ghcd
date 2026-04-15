@@ -60,7 +60,9 @@ jobs:
             GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "${output}/ghxd${EXE_SUFFIX}" ./cmd/ghxd
 
             if [ "${GOOS}" = "windows" ]; then
-              (cd "${output}" && zip "../../dist/ghx-${GOOS}-${GOARCH}.zip" "ghx${EXE_SUFFIX}" "ghxd${EXE_SUFFIX}")
+              # Include gh.cmd shim for Windows
+              printf '@echo off\r\nrem ghx-shim: this script redirects gh commands through ghx for caching\r\nghx %%*\r\n' > "${output}/gh.cmd"
+              (cd "${output}" && zip "../../dist/ghx-${GOOS}-${GOARCH}.zip" "ghx${EXE_SUFFIX}" "ghxd${EXE_SUFFIX}" "gh.cmd")
             else
               # Include gh shim script in tarball
               printf '#!/bin/sh\n# ghx-shim: this script redirects gh commands through ghx for caching\nexec ghx "$@"\n' > "${output}/gh"
