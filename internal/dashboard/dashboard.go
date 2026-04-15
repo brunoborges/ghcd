@@ -171,10 +171,9 @@ function renderStats(s) {
 
 function renderLog(entries) {
   const container = $('#logcontainer');
-  const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
   container.innerHTML = '';
   if (!entries) return;
-  for (const e of entries.reverse()) {
+  for (const e of entries) {
     const div = document.createElement('div');
     div.className = 'log-entry';
     div.innerHTML =
@@ -185,7 +184,7 @@ function renderLog(entries) {
       '<span class="log-latency">' + fmtMs(e.latency_ms) + '</span>';
     container.appendChild(div);
   }
-  if (atBottom) container.scrollTop = container.scrollHeight;
+  container.scrollTop = container.scrollHeight;
 }
 
 // Column sorting
