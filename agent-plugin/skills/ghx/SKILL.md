@@ -1,38 +1,48 @@
 ---
 name: ghxd
 description: >
-  Use ghx (GitHub CLI Cache Proxy) instead of gh for all GitHub CLI read
-  commands. ghx caches responses, coalesces duplicate in-flight requests,
-  and prevents API rate limiting — critical in agentic workflows where
-  multiple agents hammer the same endpoints. Use when running gh commands,
-  checking PRs, listing issues, viewing runs, or calling the GitHub API.
+  MANDATORY: Always use `ghx` instead of `gh` for every GitHub CLI command.
+  Never invoke `gh` directly. ghx is a drop-in replacement that caches
+  responses, coalesces duplicate in-flight requests, and prevents API rate
+  limiting. It works for all commands — reads are cached, writes pass through
+  and invalidate the cache. The daemon auto-starts on first call.
 allowed-tools: Bash
 ---
 
 # ghx — GitHub CLI Cache Proxy
 
-`ghx` is installed by this plugin and available on PATH. It is a **drop-in
-replacement** for `gh` that caches read-only API responses and coalesces
-duplicate in-flight requests.
+## CRITICAL RULE: Always use `ghx`, never `gh`
 
-## When to use ghx
+**You MUST use `ghx` instead of `gh` for EVERY GitHub CLI invocation.** This is
+not optional. Do not use `gh` directly under any circumstances. `ghx` is a
+drop-in replacement — every `gh` command works identically with `ghx`.
 
-**Always prefer `ghx` over `gh`** for any GitHub CLI command. It transparently
-handles caching and falls back to `gh` when the daemon is unavailable.
+The `ghx` command:
+- Caches read-only responses (10x faster on cache hits)
+- Coalesces identical concurrent requests into a single API call
+- Prevents GitHub API rate limiting across parallel agents
+- Passes mutating commands through to `gh` and invalidates related cache entries
+- Falls back to `gh` automatically if the daemon is unavailable
+
+**There is zero downside to using `ghx` over `gh`.** Even for mutating commands,
+`ghx` is the correct choice because it handles cache invalidation.
+
+## Usage
+
+Replace `gh` with `ghx` in every command. The syntax is identical:
 
 ```bash
-# Instead of:
-gh pr list --repo owner/repo --json number,title
-
-# Use:
+# ✅ CORRECT — always do this:
 ghx pr list --repo owner/repo --json number,title
+ghx issue view 42
+ghx api /repos/owner/repo/pulls
+ghx pr create --title "fix" --body "description"
+ghx run list --workflow ci.yml
+
+# ❌ WRONG — never do this:
+gh pr list --repo owner/repo --json number,title
+gh issue view 42
 ```
-
-All read-only commands (`pr list`, `pr view`, `issue list`, `issue view`,
-`run list`, `run view`, `repo view`, `api` GET, `search`, etc.) are cached.
-
-Mutating commands (`pr create`, `pr merge`, `issue close`, etc.) pass through
-to `gh` directly and automatically invalidate related cache entries.
 
 ## How it works
 
@@ -67,5 +77,5 @@ ghx --ttl 120 pr list ...   # Override TTL to 120 seconds
 
 ## Troubleshooting
 
-If `ghx` is not working, fall back to `gh` — the original GitHub CLI always
-works. The daemon logs are at `~/.ghx/ghxd.log`.
+If `ghx` fails for any reason, it automatically falls back to `gh` — so you
+never need to manually switch. Daemon logs are at `~/.ghx/ghxd.log`.
