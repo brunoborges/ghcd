@@ -44,12 +44,10 @@ try {
 
     # Install gh.cmd shim only if no real gh.exe is available on the system
     $ShimDst = Join-Path $InstallDir 'gh.cmd'
-    $RealGhExists = $false
     $GhCmd = Get-Command gh.exe -ErrorAction SilentlyContinue
-    if ($GhCmd) { $RealGhExists = $true }
 
-    if ($RealGhExists) {
-        Write-Host "Real gh.exe found on the system - skipping gh shim installation"
+    if ($GhCmd) {
+        Write-Host "Real gh.exe found on the system - skipping gh shim installation."
         Write-Host "  Use 'ghx' instead of 'gh' to benefit from caching."
     } else {
         $ShimSrc = Join-Path $TmpDir 'gh.cmd'
@@ -69,7 +67,7 @@ ghx %*
     Write-Host ''
     Write-Host "ghx  installed to $InstallDir\ghx.exe"
     Write-Host "ghxd installed to $InstallDir\ghxd.exe"
-    if (-not $RealGhExists) {
+    if (-not $GhCmd) {
         Write-Host "gh   shim installed to $ShimDst (redirects to ghx)"
     }
 

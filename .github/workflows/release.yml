@@ -139,7 +139,7 @@ jobs:
 
             def post_install
               # Only install gh shim if no real gh binary is available on the system
-              return if which("gh")
+              return if system("sh", "-c", "command -v gh >/dev/null 2>&1")
 
               (bin/"gh").write <<~SH
                 #!/bin/sh
