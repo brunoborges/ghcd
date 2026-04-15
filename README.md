@@ -196,14 +196,32 @@ Only explicitly allowlisted read-only commands are cached:
 | `gh run list/view` | ✅ |
 | `gh workflow list/view` | ✅ |
 | `gh release list/view` | ✅ |
-| `gh search repos/issues/prs` | ✅ |
+| `gh search repos/issues/prs/commits/code` | ✅ |
 | `gh api` (GET only) | ✅ |
 | `gh label list` | ✅ |
+| `gh gist list/view` | ✅ |
+| `gh project list/view` | ✅ |
+| `gh cache list` | ✅ |
+| `gh ruleset list/view/check` | ✅ |
+| `gh org list` | ✅ |
 | `gh pr create/merge/close/edit` | ❌ (mutation → invalidates PR cache) |
 | `gh issue create/edit/delete/close` | ❌ (mutation → invalidates issue cache) |
 | `gh auth/config/codespace/secret` | ❌ (always passthrough) |
 
 Mutations automatically invalidate related cache entries. For example, `gh pr merge 42` flushes all cached PR entries for that repo.
+
+### Custom Commands
+
+You can add your own commands to the allowlist via `~/.ghc/config.yaml`:
+
+```yaml
+additional_cacheable:
+  - "gh status"
+  - "gh variable list"
+  - "gh secret list"
+```
+
+Each entry should be the full command prefix (e.g., `"gh status"` for a single-word subcommand, or `"gh variable list"` for two-word). Custom commands are classified with `ResourceUnknown` — they participate in caching but won't be invalidated by mutation detection. To apply changes, restart the daemon: `ghcd --restart`.
 
 ## Configuration
 

@@ -16,10 +16,22 @@ func TestCacheableCommands(t *testing.T) {
 		{[]string{"issue", "list"}, Cacheable, ResourceIssue},
 		{[]string{"issue", "view", "1"}, Cacheable, ResourceIssue},
 		{[]string{"repo", "view"}, Cacheable, ResourceRepo},
+		{[]string{"repo", "list"}, Cacheable, ResourceRepo},
 		{[]string{"run", "list"}, Cacheable, ResourceRun},
 		{[]string{"release", "list"}, Cacheable, ResourceRelease},
 		{[]string{"label", "list"}, Cacheable, ResourceLabel},
 		{[]string{"search", "repos", "go"}, Cacheable, ResourceSearch},
+		{[]string{"search", "commits", "fix"}, Cacheable, ResourceSearch},
+		{[]string{"search", "code", "main"}, Cacheable, ResourceSearch},
+		{[]string{"gist", "list"}, Cacheable, ResourceGist},
+		{[]string{"gist", "view", "abc123"}, Cacheable, ResourceGist},
+		{[]string{"project", "list"}, Cacheable, ResourceProject},
+		{[]string{"project", "view", "1"}, Cacheable, ResourceProject},
+		{[]string{"cache", "list"}, Cacheable, ResourceCache},
+		{[]string{"ruleset", "list"}, Cacheable, ResourceRuleset},
+		{[]string{"ruleset", "view", "1"}, Cacheable, ResourceRuleset},
+		{[]string{"ruleset", "check"}, Cacheable, ResourceRuleset},
+		{[]string{"org", "list"}, Cacheable, ResourceOrg},
 	}
 
 	for _, tt := range tests {
@@ -97,9 +109,18 @@ func TestAPIClassification(t *testing.T) {
 }
 
 func TestAdditionalCacheable(t *testing.T) {
-	c := NewClassifier([]string{"gh status"})
+	c := NewClassifier([]string{"gh status", "gh variable list"})
+	// Single-word additional command
 	cl := c.Classify([]string{"status"})
 	if cl.Type != Cacheable {
 		t.Errorf("additional cacheable 'status': type=%d, want Cacheable", cl.Type)
+	}
+	// Two-word additional command
+	cl = c.Classify([]string{"variable", "list"})
+	if cl.Type != Cacheable {
+		t.Errorf("additional cacheable 'variable list': type=%d, want Cacheable", cl.Type)
+	}
+	if cl.CmdKey != "variable_list" {
+		t.Errorf("additional cacheable 'variable list': cmdKey=%s, want variable_list", cl.CmdKey)
 	}
 }

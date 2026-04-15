@@ -24,6 +24,11 @@ const (
 	ResourceRepo     ResourceType = "repo"
 	ResourceAPI      ResourceType = "api"
 	ResourceSearch   ResourceType = "search"
+	ResourceGist     ResourceType = "gist"
+	ResourceProject  ResourceType = "project"
+	ResourceCache    ResourceType = "cache"
+	ResourceRuleset  ResourceType = "ruleset"
+	ResourceOrg      ResourceType = "org"
 	ResourceUnknown  ResourceType = ""
 )
 
@@ -55,7 +60,18 @@ var cacheableCommands = map[string]ResourceType{
 	"search repos":   ResourceSearch,
 	"search issues":  ResourceSearch,
 	"search prs":     ResourceSearch,
+	"search commits": ResourceSearch,
+	"search code":    ResourceSearch,
 	"label list":     ResourceLabel,
+	"gist list":      ResourceGist,
+	"gist view":      ResourceGist,
+	"project list":   ResourceProject,
+	"project view":   ResourceProject,
+	"cache list":     ResourceCache,
+	"ruleset list":   ResourceRuleset,
+	"ruleset view":   ResourceRuleset,
+	"ruleset check":  ResourceRuleset,
+	"org list":       ResourceOrg,
 }
 
 // mutatingSubcommands trigger cache invalidation for their resource type.
@@ -85,6 +101,11 @@ var subcommandResourceMap = map[string]ResourceType{
 	"release":  ResourceRelease,
 	"label":    ResourceLabel,
 	"repo":     ResourceRepo,
+	"gist":     ResourceGist,
+	"project":  ResourceProject,
+	"cache":    ResourceCache,
+	"ruleset":  ResourceRuleset,
+	"org":      ResourceOrg,
 }
 
 // neverCacheSubcommands are always passed through regardless.
@@ -124,7 +145,28 @@ func (c *Classifier) Classify(args []string) Classification {
 
 	sub := args[0]
 
-	// Never-cache subcommands
+	// Check additional cacheable first — user overrides take priority.
+	// Single-word commands (e.g., "status")
+	if res, ok := c.additionalCacheable[sub]; ok {
+		return Classification{
+			Type:     Cacheable,
+			Resource: res,
+			CmdKey:   sub,
+		}
+	}
+	// Two-word additional cacheable (e.g., "variable list")
+	if len(args) >= 2 {
+		key := sub + " " + args[1]
+		if res, ok := c.additionalCacheable[key]; ok {
+			return Classification{
+				Type:     Cacheable,
+				Resource: res,
+				CmdKey:   strings.ReplaceAll(key, " ", "_"),
+			}
+		}
+	}
+
+	// Never-cache subcommands (after user overrides)
 	if neverCacheSubcommands[sub] {
 		return Classification{Type: Passthrough}
 	}
@@ -132,15 +174,6 @@ func (c *Classifier) Classify(args []string) Classification {
 	// Special handling for "api" subcommand
 	if sub == "api" {
 		return c.classifyAPI(args)
-	}
-
-	// Check single-word commands in additional cacheable (e.g., "status")
-	if res, ok := c.additionalCacheable[sub]; ok {
-		return Classification{
-			Type:     Cacheable,
-			Resource: res,
-			CmdKey:   sub,
-		}
 	}
 
 	// Need at least subcommand + action
@@ -153,15 +186,6 @@ func (c *Classifier) Classify(args []string) Classification {
 
 	// Check built-in cacheable list
 	if res, ok := cacheableCommands[key]; ok {
-		return Classification{
-			Type:     Cacheable,
-			Resource: res,
-			CmdKey:   strings.ReplaceAll(key, " ", "_"),
-		}
-	}
-
-	// Check additional cacheable from config
-	if res, ok := c.additionalCacheable[key]; ok {
 		return Classification{
 			Type:     Cacheable,
 			Resource: res,

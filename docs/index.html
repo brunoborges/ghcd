@@ -476,14 +476,23 @@ curl -fsSL https://raw.githubusercontent.com/brunoborges/ghcd/main/install.sh | 
         <tr><td><code>gh run list/view</code></td><td class="yes">✓ Cached</td><td></td></tr>
         <tr><td><code>gh workflow list/view</code></td><td class="yes">✓ Cached</td><td></td></tr>
         <tr><td><code>gh release list/view</code></td><td class="yes">✓ Cached</td><td></td></tr>
-        <tr><td><code>gh search repos/issues/prs</code></td><td class="yes">✓ Cached</td><td></td></tr>
+        <tr><td><code>gh search repos/issues/prs/commits/code</code></td><td class="yes">✓ Cached</td><td></td></tr>
         <tr><td><code>gh api</code> (GET)</td><td class="yes">✓ Cached</td><td>REST GET only</td></tr>
         <tr><td><code>gh label list</code></td><td class="yes">✓ Cached</td><td></td></tr>
+        <tr><td><code>gh gist list/view</code></td><td class="yes">✓ Cached</td><td></td></tr>
+        <tr><td><code>gh project list/view</code></td><td class="yes">✓ Cached</td><td></td></tr>
+        <tr><td><code>gh cache list</code></td><td class="yes">✓ Cached</td><td>Actions cache</td></tr>
+        <tr><td><code>gh ruleset list/view/check</code></td><td class="yes">✓ Cached</td><td></td></tr>
+        <tr><td><code>gh org list</code></td><td class="yes">✓ Cached</td><td></td></tr>
         <tr><td><code>gh pr create/merge/close</code></td><td class="no">✗ Mutation</td><td>Invalidates PR cache</td></tr>
         <tr><td><code>gh issue create/edit/delete</code></td><td class="no">✗ Mutation</td><td>Invalidates issue cache</td></tr>
         <tr><td><code>gh auth/config/codespace</code></td><td class="no">✗ Passthrough</td><td>Always direct to <code>gh</code></td></tr>
       </tbody>
     </table>
+    <p style="margin-top: 18px; color: var(--dim); font-size: 14px;">
+      <strong style="color: var(--text);">Custom commands:</strong> Add your own via <code>~/.ghc/config.yaml</code> → <code>additional_cacheable</code>.
+      For example: <code>"gh status"</code>, <code>"gh variable list"</code>. Restart the daemon to apply.
+    </p>
   </div>
 </section>
 

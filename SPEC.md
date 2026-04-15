@@ -93,10 +93,21 @@ Only explicitly allowlisted commands are cached. Everything else passes through 
 | `gh search repos <query>`    |                                          |
 | `gh search issues <query>`   |                                          |
 | `gh search prs <query>`      |                                          |
+| `gh search commits <query>`  |                                          |
+| `gh search code <query>`     |                                          |
 | `gh api <GET endpoint>`      | REST GET only; GraphQL via opt-in config |
 | `gh label list`              |                                          |
+| `gh gist list`               |                                          |
+| `gh gist view <id>`          |                                          |
+| `gh project list`            |                                          |
+| `gh project view <number>`   |                                          |
+| `gh cache list`              | Actions cache                            |
+| `gh ruleset list`            |                                          |
+| `gh ruleset view <id>`       |                                          |
+| `gh ruleset check`           |                                          |
+| `gh org list`                |                                          |
 
-The allowlist is configurable — users can add/remove patterns.
+The allowlist is configurable — users can add custom commands via `additional_cacheable` in `~/.ghc/config.yaml`.
 
 ### Commands That Are NEVER Cached
 
