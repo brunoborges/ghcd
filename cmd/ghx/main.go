@@ -302,8 +302,8 @@ func printFormattedStats(data []byte) {
 		fmt.Println("\nTop Commands:")
 		for name, raw := range stats.Commands {
 			var cmd struct {
-				Hits    int64   `json:"hits"`
-				Misses  int64   `json:"misses"`
+				Hits   int64 `json:"hits"`
+				Misses int64 `json:"misses"`
 			}
 			json.Unmarshal(raw, &cmd)
 			total := cmd.Hits + cmd.Misses
