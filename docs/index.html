@@ -163,6 +163,16 @@ nav .links .gh-btn svg { width: 16px; height: 16px; fill: var(--text-dim); }
   line-height: 1.8; text-align: left;
 }
 .install-block pre .dim { color: var(--text-dimmer); }
+.cmd-line { display: flex; align-items: center; gap: 8px; }
+.cmd-line code { flex: 1; }
+.cmd-line .copy-btn {
+  flex-shrink: 0; background: none; border: none; cursor: pointer;
+  color: var(--text-dimmer); padding: 2px 4px; border-radius: 4px;
+  opacity: 0; transition: opacity 0.2s, color 0.2s;
+}
+.cmd-line:hover .copy-btn { opacity: 1; }
+.cmd-line .copy-btn:hover { color: var(--accent); }
+.cmd-line .copy-btn.copied { color: var(--green); opacity: 1; }
 
 /* Features grid */
 .features { padding: 80px 0; }
@@ -505,17 +515,14 @@ additional_cacheable:
       </div>
       <pre>
 <span class="dim"># Install with Homebrew (macOS)</span>
-brew install brunoborges/tap/ghx
-
+<span class="cmd-line"><code>brew install brunoborges/tap/ghx</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
 <span class="dim"># Or one-liner (macOS / Linux)</span>
-curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
-
+<span class="cmd-line"><code>curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
 <span class="dim"># Windows (PowerShell)</span>
-irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex
-
+<span class="cmd-line"><code>irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
 <span class="dim"># From Source</span>
-git clone https://github.com/brunoborges/ghx.git
-cd ghx &amp;&amp; make build</pre>
+<span class="cmd-line"><code>git clone https://github.com/brunoborges/ghx.git</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
+<span class="cmd-line"><code>cd ghx &amp;&amp; make build</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span></pre>
     </div>
 
     <div style="margin-top: 32px; color: var(--text-dim); font-size: 14px; max-width: 640px; margin: 32px auto 0;">
@@ -647,6 +654,14 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.bars').forEach(el => observer.observe(el));
 
 // Copy install command
+function copyCmd(btn) {
+  const text = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '&#x2713;';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#x2398;'; }, 1500);
+  });
+}
 </script>
 
 </body>
