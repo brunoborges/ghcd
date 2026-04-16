@@ -78,7 +78,7 @@ func (h *Handler) handleExec(req *protocol.Request) *protocol.Response {
 
 	// Non-cacheable: execute directly via daemon (captures output)
 	if classification.Type == allowlist.Passthrough || req.NoCache {
-		result := executor.Execute(context.Background(), h.cfg.GHPath, req.Args)
+		result := executor.Execute(context.Background(), h.cfg.GHPath, req.Args, req.WorkDir)
 		latency := time.Since(start).Seconds() * 1000
 		h.stats.Record(cmdKey, "", metrics.ResultPassthrough, latency)
 
@@ -91,7 +91,7 @@ func (h *Handler) handleExec(req *protocol.Request) *protocol.Response {
 
 	// Mutation: execute directly, then invalidate
 	if classification.Type == allowlist.Mutation {
-		result := executor.Execute(context.Background(), h.cfg.GHPath, req.Args)
+		result := executor.Execute(context.Background(), h.cfg.GHPath, req.Args, req.WorkDir)
 		latency := time.Since(start).Seconds() * 1000
 		h.stats.Record(cmdKey, "", metrics.ResultPassthrough, latency)
 
@@ -170,7 +170,7 @@ func (h *Handler) doSingleflight(key string, req *protocol.Request) (*executor.R
 	h.inflight[key] = c
 	h.mu.Unlock()
 
-	c.res = executor.Execute(context.Background(), h.cfg.GHPath, req.Args)
+	c.res = executor.Execute(context.Background(), h.cfg.GHPath, req.Args, req.WorkDir)
 	c.wg.Done()
 
 	h.mu.Lock()

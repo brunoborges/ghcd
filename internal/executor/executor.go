@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -16,10 +17,14 @@ type Result struct {
 }
 
 // Execute runs a gh command with the given arguments and returns its output.
-func Execute(ctx context.Context, ghPath string, args []string) *Result {
+// If workDir is non-empty and absolute, the command runs in that directory.
+func Execute(ctx context.Context, ghPath string, args []string, workDir string) *Result {
 	start := time.Now()
 
 	cmd := exec.CommandContext(ctx, ghPath, args...)
+	if workDir != "" && filepath.IsAbs(workDir) {
+		cmd.Dir = workDir
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

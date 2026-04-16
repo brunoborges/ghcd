@@ -134,10 +134,12 @@ func main() {
 	}
 
 	// Send request to daemon
+	workDir, _ := os.Getwd()
 	req := &protocol.Request{
 		Type:        protocol.TypeExec,
 		Args:        ghArgs,
 		Context:     ctx,
+		WorkDir:     workDir,
 		NoCache:     noCache,
 		TTLOverride: ttlOverride,
 	}

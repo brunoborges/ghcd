@@ -17,6 +17,9 @@ type Request struct {
 	// Context is the resolved execution context.
 	Context execctx.ExecContext `json:"context"`
 
+	// WorkDir is the client's working directory, so gh runs in the correct location.
+	WorkDir string `json:"work_dir,omitempty"`
+
 	// NoCache skips cache lookup for this request.
 	NoCache bool `json:"no_cache,omitempty"`
 
