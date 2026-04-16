@@ -314,7 +314,7 @@ footer a:hover { color: var(--text); }
       <a href="#dashboard">Dashboard</a>
       <a href="#install">Install</a>
       <a href="#gh-shim">gh Shim</a>
-      <a href="#plugin">Plugin</a>
+      <a href="#plugin">Agent Plugin</a>
       <a href="https://github.com/brunoborges/ghx" class="gh-btn" target="_blank">
         <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub
@@ -552,8 +552,9 @@ cd ghx &amp;&amp; make build</pre>
     <h2>No GitHub CLI? No Problem.</h2>
     <p style="text-align:center; color: var(--text-dim); max-width: 640px; margin: -32px auto 40px;">
       When you install ghx, a lightweight <code style="color:var(--green)">gh</code> shim is automatically placed on your PATH
-      if no existing GitHub CLI is detected. This means you can start using <code>gh</code> commands immediately —
-      ghx handles everything behind the scenes.
+      if no existing GitHub CLI is detected. This is especially powerful for <strong style="color:var(--text)">AI coding agents</strong> —
+      they call <code>gh</code> by default, and the shim ensures every command is routed through the ghx caching layer
+      before hitting the real GitHub CLI. No agent configuration needed.
     </p>
     <div class="steps">
       <div class="step">
@@ -566,8 +567,8 @@ cd ghx &amp;&amp; make build</pre>
       <div class="step">
         <div class="num">2</div>
         <div class="content">
-          <h3>Run any <code>gh</code> command as usual</h3>
-          <p>Use <code>gh pr list</code>, <code>gh issue view</code>, or any other <code>gh</code> command. The shim transparently forwards everything to <code>ghx</code>, which caches reads and passes through writes.</p>
+          <h3>Agents call <code>gh</code> — caching happens automatically</h3>
+          <p>AI agents like GitHub Copilot and Claude Code use <code>gh</code> for GitHub API calls. With the shim in place, every <code>gh pr list</code>, <code>gh issue view</code>, or <code>gh api</code> call flows through ghx's cache — eliminating redundant API requests and preventing rate limits, with zero changes to the agent.</p>
         </div>
       </div>
       <div class="step">
@@ -580,6 +581,7 @@ cd ghx &amp;&amp; make build</pre>
     </div>
     <p style="text-align:center; color: var(--text-dim); max-width: 640px; margin: 24px auto 0; font-size: 14px;">
       Already have the GitHub CLI installed? The shim is skipped, and <code style="color:var(--green)">ghx</code> uses your existing <code>gh</code> directly.
+      Your agents can still benefit — just install the <a href="#plugin" style="color:var(--accent)">agent plugin</a> to teach them to prefer <code>ghx</code>.
     </p>
   </div>
 </section>
