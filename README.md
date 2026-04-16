@@ -20,14 +20,14 @@ A caching proxy for the [GitHub CLI (`gh`)](https://cli.github.com/) that elimin
 
 ## Install
 
-### Homebrew (recommended)
+### Homebrew (macOS — recommended)
 
 ```bash
 brew tap brunoborges/tap
-brew install ghxd
+brew install ghx
 ```
 
-### Quick install script
+### Quick install script (macOS / Linux)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
@@ -38,6 +38,14 @@ This detects your OS and architecture, downloads the latest release, and install
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | INSTALL_DIR=~/.local/bin bash
 ```
+
+### PowerShell (Windows)
+
+```powershell
+irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex
+```
+
+This installs `ghx.exe` and `ghxd.exe` to `%LOCALAPPDATA%\ghx\bin` and adds it to your user PATH. If no real `gh.exe` is found, a `gh.cmd` shim is also installed.
 
 ### Manual download
 
@@ -56,6 +64,8 @@ sudo cp ghx ghxd /usr/local/bin/
 curl -fsSL https://github.com/brunoborges/ghx/releases/latest/download/ghx-linux-arm64.tar.gz | tar xz
 sudo cp ghx ghxd /usr/local/bin/
 ```
+
+On Windows, download the `.zip` from [GitHub Releases](https://github.com/brunoborges/ghx/releases) and extract `ghx.exe` and `ghxd.exe` to a directory on your PATH.
 
 ### Build from source
 
@@ -118,6 +128,7 @@ This means existing tools, scripts, and CI workflows that call `gh` will automat
 | Install method | Shim location | Notes |
 |---|---|---|
 | **install.sh** | `$INSTALL_DIR/gh` (default `/usr/local/bin/gh`) | Skipped if a real `gh` binary exists anywhere on the system |
+| **install.ps1** | `%LOCALAPPDATA%\ghx\bin\gh.cmd` | Skipped if a real `gh.exe` exists on the system |
 | **Homebrew** | `$(brew --prefix)/bin/gh` | Skipped if `gh` is already installed (via Homebrew or otherwise) |
 | **Agent plugin** | Plugin `bin/` directory (on PATH) | Skipped if a real `gh` binary exists on the system |
 
