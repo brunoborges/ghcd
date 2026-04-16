@@ -29,6 +29,8 @@ const (
 	ResourceCache    ResourceType = "cache"
 	ResourceRuleset  ResourceType = "ruleset"
 	ResourceOrg      ResourceType = "org"
+	ResourceSecret   ResourceType = "secret"
+	ResourceVariable ResourceType = "variable"
 	ResourceUnknown  ResourceType = ""
 )
 
@@ -74,6 +76,9 @@ var cacheableCommands = map[string]ResourceType{
 	"ruleset view":   ResourceRuleset,
 	"ruleset check":  ResourceRuleset,
 	"org list":       ResourceOrg,
+	"secret list":    ResourceSecret,
+	"variable list":  ResourceVariable,
+	"variable get":   ResourceVariable,
 }
 
 // mutatingSubcommands trigger cache invalidation for their resource type.
@@ -93,6 +98,7 @@ var mutatingActions = map[string]bool{
 	"pin":      true,
 	"unpin":    true,
 	"transfer": true,
+	"set":      true,
 }
 
 var subcommandResourceMap = map[string]ResourceType{
@@ -108,6 +114,8 @@ var subcommandResourceMap = map[string]ResourceType{
 	"cache":    ResourceCache,
 	"ruleset":  ResourceRuleset,
 	"org":      ResourceOrg,
+	"secret":   ResourceSecret,
+	"variable": ResourceVariable,
 }
 
 // neverCacheSubcommands are always passed through regardless.
@@ -117,8 +125,6 @@ var neverCacheSubcommands = map[string]bool{
 	"config":    true,
 	"ssh-key":   true,
 	"gpg-key":   true,
-	"secret":    true,
-	"variable":  true,
 	"extension": true,
 }
 

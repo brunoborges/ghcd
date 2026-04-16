@@ -34,6 +34,9 @@ func TestCacheableCommands(t *testing.T) {
 		{[]string{"ruleset", "view", "1"}, Cacheable, ResourceRuleset},
 		{[]string{"ruleset", "check"}, Cacheable, ResourceRuleset},
 		{[]string{"org", "list"}, Cacheable, ResourceOrg},
+		{[]string{"secret", "list"}, Cacheable, ResourceSecret},
+		{[]string{"variable", "list"}, Cacheable, ResourceVariable},
+		{[]string{"variable", "get", "MY_VAR"}, Cacheable, ResourceVariable},
 	}
 
 	for _, tt := range tests {
@@ -60,6 +63,10 @@ func TestMutations(t *testing.T) {
 		{[]string{"issue", "create"}, Mutation},
 		{[]string{"issue", "edit", "1"}, Mutation},
 		{[]string{"issue", "delete", "1"}, Mutation},
+		{[]string{"secret", "set", "MY_SECRET"}, Mutation},
+		{[]string{"secret", "delete", "MY_SECRET"}, Mutation},
+		{[]string{"variable", "set", "MY_VAR"}, Mutation},
+		{[]string{"variable", "delete", "MY_VAR"}, Mutation},
 	}
 
 	for _, tt := range tests {
