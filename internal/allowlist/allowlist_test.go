@@ -27,6 +27,8 @@ func TestCacheableCommands(t *testing.T) {
 		{[]string{"gist", "view", "abc123"}, Cacheable, ResourceGist},
 		{[]string{"project", "list"}, Cacheable, ResourceProject},
 		{[]string{"project", "view", "1"}, Cacheable, ResourceProject},
+		{[]string{"project", "field-list"}, Cacheable, ResourceProject},
+		{[]string{"project", "item-list", "1"}, Cacheable, ResourceProject},
 		{[]string{"cache", "list"}, Cacheable, ResourceCache},
 		{[]string{"ruleset", "list"}, Cacheable, ResourceRuleset},
 		{[]string{"ruleset", "view", "1"}, Cacheable, ResourceRuleset},
