@@ -338,20 +338,6 @@ footer a:hover { color: var(--text); }
       <a href="#install" class="btn btn-primary">Get Started</a>
       <a href="https://github.com/brunoborges/ghx" class="btn btn-secondary" target="_blank">View on GitHub</a>
     </div>
-
-    <div class="install-block">
-      <div class="bar">
-        <div class="dots"><span></span><span></span><span></span></div>
-      </div>
-      <pre><span class="dim"># Install with Homebrew (macOS)</span>
-brew install brunoborges/tap/ghx
-
-<span class="dim"># Or one-liner (macOS / Linux)</span>
-curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
-
-<span class="dim"># Windows (PowerShell)</span>
-irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex</pre>
-    </div>
   </div>
 </section>
 
@@ -512,52 +498,32 @@ additional_cacheable:
 <section class="features" id="install" style="padding-bottom: 100px">
   <div class="container">
     <h2>Install</h2>
-    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto;">
-      <div class="feature-card" style="display: flex; align-items: center; gap: 20px;">
-        <div class="icon" style="margin-bottom: 0; flex-shrink: 0;">🍺</div>
-        <div>
-          <h3>Homebrew <span style="font-size: 12px; color: var(--text-dim); font-weight: normal;">(macOS)</span></h3>
-          <p style="font-family: var(--mono); font-size: 13px; color: var(--green); margin-top: 8px; user-select: all;">
-            brew tap brunoborges/tap &amp;&amp; brew install ghx
-          </p>
-        </div>
+
+    <div class="install-block">
+      <div class="bar">
+        <div class="dots"><span></span><span></span><span></span></div>
       </div>
-      <div class="feature-card" style="display: flex; align-items: center; gap: 20px;">
-        <div class="icon" style="margin-bottom: 0; flex-shrink: 0;">📜</div>
-        <div>
-          <h3>Install Script <span style="font-size: 12px; color: var(--text-dim); font-weight: normal;">(macOS / Linux)</span></h3>
-          <p style="font-family: var(--mono); font-size: 13px; color: var(--green); margin-top: 8px; user-select: all; word-break: break-all;">
-            curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
-          </p>
-        </div>
-      </div>
-      <div class="feature-card" style="display: flex; align-items: center; gap: 20px;">
-        <div class="icon" style="margin-bottom: 0; flex-shrink: 0;">🪟</div>
-        <div>
-          <h3>PowerShell <span style="font-size: 12px; color: var(--text-dim); font-weight: normal;">(Windows)</span></h3>
-          <p style="font-family: var(--mono); font-size: 13px; color: var(--green); margin-top: 8px; user-select: all; word-break: break-all;">
-            irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex
-          </p>
-        </div>
-      </div>
-      <div class="feature-card" style="display: flex; align-items: center; gap: 20px;">
-        <div class="icon" style="margin-bottom: 0; flex-shrink: 0;">📦</div>
-        <div>
-          <h3>GitHub Releases</h3>
-          <p style="margin-top: 8px;">
-            <a href="https://github.com/brunoborges/ghx/releases" style="color: var(--accent);">Download binaries</a>
-            for macOS (Apple Silicon), Linux (x64 &amp; arm64), and Windows (x64 &amp; arm64).
-          </p>
-        </div>
-      </div>
-      <div class="feature-card" style="display: flex; align-items: center; gap: 20px;">
-        <div class="icon" style="margin-bottom: 0; flex-shrink: 0;">🔧</div>
-        <div>
-          <h3>From Source</h3>
-          <pre style="font-family: var(--mono); font-size: 13px; color: var(--green); margin-top: 8px; text-align: left; white-space: pre; user-select: all;">git clone https://github.com/brunoborges/ghx.git
+      <pre>
+<span class="dim"># Install with Homebrew (macOS)</span>
+brew install brunoborges/tap/ghx
+
+<span class="dim"># Or one-liner (macOS / Linux)</span>
+curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
+
+<span class="dim"># Windows (PowerShell)</span>
+irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex
+
+<span class="dim"># From Source</span>
+git clone https://github.com/brunoborges/ghx.git
 cd ghx &amp;&amp; make build</pre>
-        </div>
-      </div>
+    </div>
+
+    <div style="margin-top: 32px; color: var(--text-dim); font-size: 14px; max-width: 640px; margin: 32px auto 0;">
+      <h3 style="font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px;">GitHub Releases</h3>
+      <p>
+        Pre-built binaries are available for macOS (Apple Silicon), Linux (x64 &amp; arm64), and Windows (x64 &amp; arm64).
+        <a href="https://github.com/brunoborges/ghx/releases" style="color: var(--accent);">Browse releases →</a>
+      </p>
     </div>
   </div>
 </section>
