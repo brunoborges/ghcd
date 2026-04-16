@@ -22,7 +22,7 @@ The system uses an **allowlist** of known-safe read-only commands, **request coa
 └────┬────┘  └────┬────┘  └────┬────┘
      │            │            │
      └────────────┼────────────┘
-                  │ Unix Domain Socket
+                  │ IPC (Unix socket / Windows named pipe)
            ┌──────┴──────┐
            │    ghxd     │
            │  (daemon)   │
@@ -40,7 +40,7 @@ The system uses an **allowlist** of known-safe read-only commands, **request coa
 
 ## Language
 
-**Go**. Same language as `gh` itself. Excellent for CLI tools, daemon processes, and HTTP servers. Standard library covers Unix sockets, HTTP, JSON, and concurrency primitives. Easy cross-compilation for macOS/Linux.
+**Go**. Same language as `gh` itself. Excellent for CLI tools, daemon processes, and HTTP servers. Standard library covers Unix sockets, HTTP, JSON, and concurrency primitives. Easy cross-compilation for macOS, Linux, and Windows.
 
 ## Core Concepts
 
@@ -105,6 +105,7 @@ Only explicitly allowlisted commands are cached. Everything else passes through 
 | `gh ruleset list`            |                                          |
 | `gh ruleset view <id>`       |                                          |
 | `gh ruleset check`           |                                          |
+| `gh repo list`               |                                          |
 | `gh org list`                |                                          |
 
 The allowlist is configurable — users can add custom commands via `additional_cacheable` in `~/.ghx/config.yaml`.
@@ -226,13 +227,13 @@ GHX_NO_CACHE=1 ghx pr list        # Same as --no-cache, via env var
 
 When `ghx` is invoked and no daemon is running, it **automatically starts one** in the background. This makes `ghx` a true drop-in replacement — no setup required.
 
-### IPC: Unix Domain Socket
+### IPC Transport
 
-- Path: `$XDG_RUNTIME_DIR/ghx/ghxd.sock` or `~/.ghx/ghxd.sock`
-- Permissions: `0600` (owner-only)
-- Protocol: length-prefixed JSON messages over the socket
+- **Unix (macOS/Linux)**: Unix domain socket at `~/.ghx/ghxd.sock`, permissions `0600` (owner-only)
+- **Windows**: Named pipe at `\\.\pipe\ghxd` (via `go-winio`)
+- **Protocol**: Length-prefixed JSON messages (4-byte big-endian size header, 10MB max)
 
-The client sends a request containing the command, arguments, and resolved execution context. The daemon responds with the cached or fresh result.
+The client sends a `Request` containing the command args, resolved execution context, and the client's working directory (`WorkDir`). The daemon responds with the cached or fresh result.
 
 ### PID File
 
@@ -310,7 +311,7 @@ GET /api/log?limit=200  → [ { timestamp, command, cache_result, latency_ms }, 
 
 ## Configuration File
 
-Location: `~/.ghx/config.yaml`
+Location: `~/.ghx/config.yaml` (Unix) or `%LOCALAPPDATA%\ghx\config.yaml` (Windows)
 
 ```yaml
 # Default TTL for all cached commands
@@ -336,11 +337,8 @@ auto_start: true
 additional_cacheable:
   - "gh status"
 
-# Metrics
-metrics:
-  prometheus: false
-  dashboard: false
-  port: 9847
+# Dashboard port (0 to disable)
+dashboard_port: 9847
 
 # gh binary path (auto-resolved if not set)
 # Resolution: this setting → PATH → ~/.ghx/bin/gh → auto-download
@@ -378,7 +376,8 @@ exec ghx "$@"
 |---|---|
 | **Release tarball** | Shim included in the tarball alongside `ghx` and `ghxd` |
 | **install.sh** | Installs the shim only if no real `gh` binary is found anywhere on the system PATH |
-| **Homebrew formula** | Installs the shim in `post_install` only if no `gh` binary is found on the system |
+| **install.ps1** | Windows installer; installs the shim only if no real `gh` binary is found |
+| **Homebrew formula** | Installs the shim during `install` (not `post_install`) only if no `gh` binary is found on the system |
 | **Agent plugin** | `bin/gh` wrapper delegates to the co-located `ghx` wrapper; plugin install script installs the shim only if no real `gh` binary is found on the system |
 
 **Shim detection** uses three strategies to prevent infinite recursion:
@@ -391,9 +390,9 @@ exec ghx "$@"
 When no `gh` is available, `ghx` downloads it from [cli/cli releases](https://github.com/cli/cli/releases):
 
 1. Fetch latest version from the GitHub Releases API
-2. Determine the correct asset name based on OS (`macOS`, `linux`) and architecture (`amd64`, `arm64`)
+2. Determine the correct asset name based on OS (`macOS`, `linux`, `windows`) and architecture (`amd64`, `arm64`)
 3. Download the release checksums file and verify SHA-256 of the archive
-4. Extract the `gh` binary from the archive (`.tar.gz` for Linux, `.zip` for macOS)
+4. Extract the `gh` binary from the archive (`.tar.gz` for Linux, `.zip` for macOS and Windows)
 5. Atomically install to `~/.ghx/bin/gh` (temp file + rename)
 
 **Safety measures:**
@@ -422,7 +421,7 @@ Staleness checks only apply to the managed binary. If `gh` was found in PATH or 
 
 ## Security Considerations
 
-1. **Socket permissions**: Unix socket is created with `0600` — only the owning user can connect
+1. **IPC permissions**: Unix socket is created with `0600` — only the owning user can connect. On Windows, named pipe uses default security descriptors
 2. **No token storage**: The daemon never stores auth tokens; it delegates to `gh` which manages its own auth. Only a SHA256 fingerprint of the token is used in cache keys
 3. **No cross-user sharing**: Each user runs their own daemon with their own cache
 4. **Cached data**: Responses may contain private repo data. The in-memory cache is ephemeral and protected by socket permissions
@@ -441,60 +440,78 @@ Staleness checks only apply to the managed binary. If `gh` was found in PATH or 
 ```
 ghx/
 ├── cmd/
-│   ├── ghx/           # CLI client entry point
-│   │   └── main.go
-│   └── ghxd/          # Daemon entry point
+│   ├── ghx/                # CLI client entry point
+│   │   ├── main.go
+│   │   ├── proc_unix.go    # Unix process management (build-tagged)
+│   │   └── proc_windows.go # Windows process management (build-tagged)
+│   └── ghxd/               # Daemon entry point
 │       └── main.go
 ├── internal/
-│   ├── cache/         # LRU cache with TTL
-│   │   ├── cache.go
-│   │   └── cache_test.go
-│   ├── client/        # Unix socket client
-│   │   ├── client.go
-│   │   └── client_test.go
-│   ├── context/       # Execution context resolution
-│   │   ├── resolve.go
-│   │   └── resolve_test.go
-│   ├── daemon/        # Daemon server, request handling
-│   │   ├── server.go
-│   │   ├── handler.go
-│   │   └── server_test.go
-│   ├── allowlist/     # Command classification
+│   ├── allowlist/           # Command classification
 │   │   ├── allowlist.go
 │   │   └── allowlist_test.go
-│   ├── executor/      # gh command execution
+│   ├── cache/               # LRU cache with TTL
+│   │   ├── cache.go
+│   │   └── cache_test.go
+│   ├── client/              # IPC client
+│   │   └── client.go
+│   ├── config/              # Configuration loading
+│   │   ├── config.go
+│   │   ├── config_test.go
+│   │   ├── dir_unix.go      # Unix default paths (build-tagged)
+│   │   └── dir_windows.go   # Windows default paths (build-tagged)
+│   ├── context/             # Execution context resolution
+│   │   └── resolve.go
+│   ├── daemon/              # Daemon server, request handling
+│   │   ├── server.go
+│   │   ├── handler.go       # Includes inline singleflight coalescing
+│   │   ├── platform_unix.go
+│   │   └── platform_windows.go
+│   ├── dashboard/           # Web dashboard (embedded HTML)
+│   │   ├── dashboard.go
+│   │   └── static/
+│   ├── executor/            # gh command execution
 │   │   ├── executor.go
 │   │   └── executor_test.go
-│   ├── ghcli/         # gh binary resolution and auto-download
+│   ├── ghcli/               # gh binary resolution and auto-download
 │   │   ├── resolve.go
+│   │   ├── resolve_test.go
 │   │   ├── shim.go
-│   │   └── download.go
-│   ├── metrics/       # Counters, stats, JSON API
+│   │   ├── shim_test.go
+│   │   ├── download.go
+│   │   └── download_test.go
+│   ├── ipc/                 # Platform-specific IPC transport
+│   │   ├── ipc_unix.go      # Unix domain sockets (build-tagged)
+│   │   └── ipc_windows.go   # Named pipes via go-winio (build-tagged)
+│   ├── metrics/             # Counters, stats, JSON API
 │   │   ├── metrics.go
 │   │   └── metrics_test.go
-│   ├── singleflight/  # Request coalescing
-│   │   └── singleflight.go
-│   ├── config/        # Configuration loading
-│   │   ├── config.go
-│   │   └── config_test.go
-│   └── dashboard/     # Web dashboard (Phase 2)
-│       ├── dashboard.go
-│       └── static/
+│   └── protocol/            # Length-prefixed JSON IPC protocol
+│       └── protocol.go
+├── agent-plugin/            # Claude Code / Copilot CLI plugin
+│   ├── bin/                 # Shell wrapper scripts (lazy-install)
+│   ├── scripts/             # Install scripts (OS/arch auto-detect)
+│   └── skills/              # Agent skill definitions
+├── docs/                    # GitHub Pages site
+│   └── index.html
+├── install.sh               # Unix installer (curl | sh)
+├── install.ps1              # Windows installer (irm | iex)
 ├── go.mod
 ├── go.sum
 ├── Makefile
+├── SPEC.md
 └── README.md
 ```
 
 ## Phased Delivery
 
-### Phase 1 — Core Caching + Dashboard
+### Phase 1 — Core Caching + Dashboard ✅
 
 - `ghx` client and `ghxd` daemon
-- Unix domain socket IPC
+- IPC via Unix domain sockets (macOS/Linux) and named pipes (Windows)
 - Allowlisted command caching with context-aware keys
 - Configurable TTL (default 30s)
-- Singleflight request coalescing
+- Singleflight request coalescing (inline in handler)
 - Coarse-grained invalidation after mutations
 - Auto-start daemon, fallback to direct `gh` on failure
 - `ghx xcache stats` for CLI metrics
@@ -502,6 +519,11 @@ ghx/
 - Config file support
 - Web dashboard with per-command stats, request log, and TTL analysis
 - JSON API for scripting
+- Windows support (named pipes, PowerShell installer)
+- `gh` shim for systems without GitHub CLI
+- `gh` auto-download and resolution
+- Agent plugin for Claude Code / Copilot CLI
+- Client working directory forwarding to daemon
 
 ### Phase 2 — Advanced Features
 

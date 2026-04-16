@@ -342,7 +342,7 @@ footer a:hover { color: var(--text); }
         <div class="dots"><span></span><span></span><span></span></div>
       </div>
       <pre><span class="dim"># Install with Homebrew (macOS)</span>
-brew tap brunoborges/tap &amp;&amp; brew install ghx
+brew install brunoborges/tap/ghx
 
 <span class="dim"># Or one-liner (macOS / Linux)</span>
 curl -fsSL https://raw.githubusercontent.com/brunoborges/ghx/main/install.sh | bash
@@ -485,10 +485,24 @@ irm https://raw.githubusercontent.com/brunoborges/ghx/main/install.ps1 | iex</pr
         <tr><td><code>gh auth/config/codespace</code></td><td class="no">✗ Passthrough</td><td>Always direct to <code>gh</code></td></tr>
       </tbody>
     </table>
-    <p style="margin-top: 18px; color: var(--dim); font-size: 14px;">
-      <strong style="color: var(--text);">Custom commands:</strong> Add your own via <code>~/.ghx/config.yaml</code> → <code>additional_cacheable</code>.
-      For example: <code>"gh status"</code>, <code>"gh variable list"</code>. Restart the daemon to apply.
-    </p>
+    <div style="margin-top: 32px; color: var(--text-dim); font-size: 14px;">
+      <h3 style="font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Custom Cacheable Commands</h3>
+      <p style="margin-bottom: 12px;">
+        Add commands to the allowlist without recompiling. Edit <code style="color: var(--accent);">~/.ghx/config.yaml</code>
+        and list subcommand prefixes under <code style="color: var(--accent);">additional_cacheable</code>.
+        Any <code>gh</code> invocation whose arguments start with a listed prefix will be cached.
+        Restart the daemon after making changes.
+      </p>
+      <pre style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-family: var(--mono); font-size: 13px; color: var(--text); line-height: 1.8; overflow-x: auto;">ttl: 60s
+
+additional_cacheable:
+  <span class="dim"># Cache `gh status` output</span>
+  - <span style="color: var(--green);">"status"</span>
+  <span class="dim"># Cache Actions variable listings</span>
+  - <span style="color: var(--green);">"variable list"</span>
+  <span class="dim"># Cache team member queries</span>
+  - <span style="color: var(--green);">"api graphql"</span></pre>
+    </div>
   </div>
 </section>
 
