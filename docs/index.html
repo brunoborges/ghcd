@@ -171,7 +171,7 @@ nav .links .gh-btn svg { width: 16px; height: 16px; fill: var(--text-dim); }
   font-size: 18px; line-height: 1;
   opacity: 0; transition: opacity 0.2s, color 0.2s;
 }
-.cmd-line:hover .copy-btn { opacity: 1; }
+.cmd-line:hover .copy-btn, .step:hover .copy-btn { opacity: 1; }
 .cmd-line .copy-btn:hover { color: var(--accent); }
 .cmd-line .copy-btn.copied { color: var(--green); opacity: 1; }
 
@@ -603,22 +603,22 @@ additional_cacheable:
     </p>
     <div class="steps">
       <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
+        <div class="num">1</div>
+        <div class="content">
           <h3>Add the marketplace</h3>
-          <p><code style="color:var(--green)">/plugin marketplace add brunoborges/agent-plugins</code></p>
+          <p class="cmd-line"><code style="color:var(--green)">/plugin marketplace add brunoborges/agent-plugins</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></p>
         </div>
       </div>
       <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
+        <div class="num">2</div>
+        <div class="content">
           <h3>Install the plugin</h3>
-          <p><code style="color:var(--green)">/plugin install ghx@agent-plugins</code></p>
+          <p class="cmd-line"><code style="color:var(--green)">/plugin install ghx@agent-plugins</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></p>
         </div>
       </div>
       <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
+        <div class="num">3</div>
+        <div class="content">
           <h3>Agent learns to use <code style="color:var(--green)">ghx</code></h3>
           <p>A built-in skill teaches the agent to prefer <code>ghx</code> for all GitHub CLI commands. Binaries are lazy-installed on first use — no manual setup needed.</p>
         </div>
