@@ -110,30 +110,15 @@ func (c *Cache) InvalidateNamespace(host, repo string, resource allowlist.Resour
 	return len(toRemove)
 }
 
-// Flush removes all entries, optionally filtered by resource type.
-func (c *Cache) Flush(resource allowlist.ResourceType) int {
+// Flush removes all entries from the cache.
+func (c *Cache) Flush() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if resource == allowlist.ResourceUnknown {
-		count := c.order.Len()
-		c.items = make(map[string]*list.Element)
-		c.order.Init()
-		return count
-	}
-
-	var toRemove []*list.Element
-	for elem := c.order.Front(); elem != nil; elem = elem.Next() {
-		entry := elem.Value.(*Entry)
-		if entry.Resource == resource {
-			toRemove = append(toRemove, elem)
-		}
-	}
-
-	for _, elem := range toRemove {
-		c.removeElement(elem)
-	}
-	return len(toRemove)
+	count := c.order.Len()
+	c.items = make(map[string]*list.Element)
+	c.order.Init()
+	return count
 }
 
 // Size returns the current number of cached entries.

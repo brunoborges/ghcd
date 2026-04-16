@@ -37,8 +37,9 @@ func TestRecordAndSnapshot(t *testing.T) {
 	if prStats.Hits != 2 || prStats.Misses != 1 {
 		t.Errorf("pr_list: hits=%d misses=%d, want 2/1", prStats.Hits, prStats.Misses)
 	}
-	if prStats.HitRate() < 66 || prStats.HitRate() > 67 {
-		t.Errorf("pr_list hit rate=%.1f, want ~66.7", prStats.HitRate())
+	hitRate := float64(prStats.Hits) / float64(prStats.Hits+prStats.Misses) * 100
+	if hitRate < 66 || hitRate > 67 {
+		t.Errorf("pr_list hit rate=%.1f, want ~66.7", hitRate)
 	}
 }
 

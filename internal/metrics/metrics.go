@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -34,15 +33,6 @@ type CommandStats struct {
 	Coalesced      int64   `json:"coalesced"`
 	TotalLatencyMs float64 `json:"total_latency_ms"`
 	RequestCount   int64   `json:"request_count"`
-}
-
-// HitRate returns the cache hit rate for this command.
-func (cs *CommandStats) HitRate() float64 {
-	total := cs.Hits + cs.Misses
-	if total == 0 {
-		return 0
-	}
-	return float64(cs.Hits) / float64(total) * 100
 }
 
 // AvgLatencyMs returns the average latency in milliseconds.
@@ -257,12 +247,6 @@ func (s *Stats) TTLAnalysis() []TTLRecommendation {
 		})
 	}
 	return recs
-}
-
-func (s *Stats) ToJSON() ([]byte, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return json.Marshal(s)
 }
 
 func formatDuration(d time.Duration) string {

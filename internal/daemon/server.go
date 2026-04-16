@@ -83,8 +83,10 @@ func (s *Server) Run() error {
 	}
 	defer s.removePIDFile()
 
-	// Start HTTP server for dashboard
-	s.startHTTP()
+	// Start HTTP server for dashboard (skip if port is 0)
+	if s.cfg.DashboardPort != 0 {
+		s.startHTTP()
+	}
 
 	// Handle signals
 	sigCh := make(chan os.Signal, 1)
@@ -99,7 +101,10 @@ func (s *Server) Run() error {
 		}
 	}()
 
-	log.Printf("ghxd started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", s.cfg.SocketPath, s.cfg.DashboardPort)
+	log.Printf("ghxd started (socket: %s", s.cfg.SocketPath)
+	if s.cfg.DashboardPort != 0 {
+		log.Printf("  dashboard: http://127.0.0.1:%d/", s.cfg.DashboardPort)
+	}
 
 	// Accept connections
 	for {
@@ -198,8 +203,7 @@ func (s *Server) startHTTP() {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		resource := allowlist.ResourceType(r.URL.Query().Get("resource"))
-		count := s.cache.Flush(resource)
+		count := s.cache.Flush()
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{"flushed": count})
 	})

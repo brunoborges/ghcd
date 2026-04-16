@@ -249,8 +249,7 @@ func handleCache(cfg *config.Config, args []string) {
 		printFormattedStats(resp.Stdout)
 
 	case "flush":
-		flushArgs := args[1:]
-		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeFlush, Args: flushArgs})
+		resp, err := cl.Send(&protocol.Request{Type: protocol.TypeFlush})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
 			os.Exit(1)

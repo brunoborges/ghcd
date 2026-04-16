@@ -7,7 +7,6 @@ description: >
   ghx is a drop-in replacement that caches responses, coalesces duplicate
   in-flight requests, and prevents API rate limiting. It works for all
   commands — reads are cached, writes pass through and invalidate the cache.
-  The daemon auto-starts on first call.
 allowed-tools: Bash
 ---
 
@@ -24,7 +23,7 @@ The `ghx` command:
 - Coalesces identical concurrent requests into a single API call
 - Prevents GitHub API rate limiting across parallel agents
 - Passes mutating commands through to `gh` and invalidates related cache entries
-- Falls back to `gh` automatically if the daemon is unavailable
+- Falls back to `gh` automatically if anything goes wrong
 
 **There is zero downside to using `ghx` over `gh`.** Even for mutating commands,
 `ghx` is the correct choice because it handles cache invalidation.
@@ -109,8 +108,8 @@ gh issue view 42
 
 ## How it works
 
-- The `ghxd` daemon auto-starts on first `ghx` call — no manual setup needed
-- Cached responses are served in ~0.1s vs ~1s for uncached calls
+- No setup needed — just use `ghx` instead of `gh`
+- Cached responses are served in ~0.1ms vs ~1s for uncached calls
 - Identical concurrent requests are coalesced into a single API call
 - Default cache TTL is 30 seconds (configurable)
 
@@ -119,16 +118,7 @@ gh issue view 42
 ```bash
 ghx xcache stats             # View hit rates and per-command breakdown
 ghx xcache flush             # Flush all cached entries
-ghx xcache flush pr          # Flush only PR-related entries
 ghx xcache keys              # List cached keys (debugging)
-```
-
-## Daemon management
-
-```bash
-ghx xdaemon status           # Check if daemon is running, view uptime
-ghx xdaemon stop             # Stop the daemon
-ghx xdaemon restart          # Restart the daemon
 ```
 
 ## Per-command overrides
@@ -141,4 +131,4 @@ ghx --ttl 120 pr list ...   # Override TTL to 120 seconds
 ## Troubleshooting
 
 If `ghx` fails for any reason, it automatically falls back to `gh` — so you
-never need to manually switch. Daemon logs are at `~/.ghx/ghxd.log`.
+never need to manually switch.

@@ -188,8 +188,6 @@ ghx xdaemon restart        # Stop + start
 
 ```bash
 ghx xcache flush           # Flush all cached entries
-ghx xcache flush pr        # Flush all PR-related entries
-ghx xcache flush --repo owner/repo  # Flush entries for a specific repo
 ghx xcache stats           # Show hit rate, per-command breakdown
 ghx xcache keys            # List currently cached keys (for debugging)
 ```
@@ -199,17 +197,6 @@ ghx xcache keys            # List currently cached keys (for debugging)
 ```bash
 ghx ghcli status             # Show which gh binary is in use, version, and age
 ghx ghcli upgrade            # Download the latest GitHub CLI to ~/.ghx/bin/gh
-```
-
-### Configuration
-
-```bash
-ghx config set ttl 60             # Set default TTL to 60 seconds
-ghx config set ttl.pr.list 120    # Per-command TTL override
-ghx config set max-cache-size 500 # Max cached entries (LRU eviction)
-ghx config set dashboard.port 9876
-ghx config get ttl
-ghx config list
 ```
 
 ### Per-Command Overrides
@@ -345,7 +332,6 @@ dashboard_port: 9847
 gh_path: /opt/homebrew/bin/gh
 
 # Logging
-log_level: info
 log_file: ~/.ghx/ghxd.log
 ```
 

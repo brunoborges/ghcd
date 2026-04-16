@@ -81,7 +81,7 @@ func TestFlushAll(t *testing.T) {
 	c.Set(&Entry{Key: "a", CachedAt: time.Now(), TTL: time.Minute})
 	c.Set(&Entry{Key: "b", CachedAt: time.Now(), TTL: time.Minute})
 
-	n := c.Flush(allowlist.ResourceUnknown)
+	n := c.Flush()
 	if n != 2 {
 		t.Fatalf("expected 2 flushed, got %d", n)
 	}

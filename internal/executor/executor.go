@@ -49,24 +49,3 @@ func Execute(ctx context.Context, ghPath string, args []string, workDir string) 
 
 	return result
 }
-
-// ExecutePassthrough runs a gh command directly, inheriting stdio.
-// Used for interactive/mutating commands that can't be cached.
-func ExecutePassthrough(ghPath string, args []string) int {
-	cmd := exec.Command(ghPath, args...)
-	cmd.Stdin = nil // stdin is not forwarded through daemon
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-
-	// For passthrough, we connect to the calling process's stdio
-	// This is only used when ghx falls back to direct execution
-	cmd.Stdin = nil
-
-	if err := cmd.Run(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return exitErr.ExitCode()
-		}
-		return 1
-	}
-	return 0
-}

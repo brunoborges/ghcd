@@ -22,6 +22,16 @@ func main() {
 	log.SetPrefix("ghxd: ")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmsgprefix)
 
+	if cfg.LogFile != "" {
+		f, err := os.OpenFile(cfg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+		if err != nil {
+			log.Printf("warning: cannot open log file %s: %v (logging to stderr)", cfg.LogFile, err)
+		} else {
+			log.SetOutput(f)
+			defer f.Close()
+		}
+	}
+
 	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
 		fmt.Printf("ghxd version %s\n", version)
 		os.Exit(0)
@@ -40,6 +50,7 @@ func main() {
 		fmt.Printf("  Socket:    %s\n", cfg.SocketPath)
 		fmt.Printf("  Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)
 		fmt.Printf("  PID file:  %s\n", cfg.PIDFile)
+		fmt.Printf("  Log file:  %s\n", cfg.LogFile)
 		fmt.Println()
 		fmt.Println("The daemon is typically managed via: ghx xdaemon start|stop|status|restart")
 		os.Exit(0)

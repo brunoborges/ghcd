@@ -18,7 +18,6 @@ type Config struct {
 	AdditionalCache []string                 `yaml:"additional_cacheable"`
 	DashboardPort   int                      `yaml:"dashboard_port"`
 	GHPath          string                   `yaml:"gh_path"`
-	LogLevel        string                   `yaml:"log_level"`
 	LogFile         string                   `yaml:"log_file"`
 }
 
@@ -33,7 +32,6 @@ func DefaultConfig() *Config {
 		AutoStart:       true,
 		DashboardPort:   9847,
 		GHPath:          "gh",
-		LogLevel:        "info",
 		LogFile:         filepath.Join(ghxDir, "ghxd.log"),
 	}
 }
@@ -71,15 +69,6 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-// GHCDir returns the ghx configuration directory, creating it if needed.
-func GHCDir() (string, error) {
-	dir := defaultGHXDir()
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return "", err
-	}
-	return dir, nil
 }
 
 // CommandTTL returns the TTL for a specific command, falling back to default.

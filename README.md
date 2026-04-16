@@ -1,5 +1,10 @@
 # ghx — GitHub CLI Cache Proxy
 
+[![CI](https://github.com/brunoborges/ghx/actions/workflows/ci.yml/badge.svg)](https://github.com/brunoborges/ghx/actions/workflows/ci.yml)
+[![Release](https://github.com/brunoborges/ghx/actions/workflows/release.yml/badge.svg)](https://github.com/brunoborges/ghx/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/brunoborges/ghx)](https://goreportcard.com/report/github.com/brunoborges/ghx)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 <p align="center">
   <img src="ghx-dashboard.png" alt="ghx Dashboard" width="700">
 </p>
@@ -233,7 +238,6 @@ The daemon auto-starts on first `ghx` call. If the daemon can't start, `ghx` fal
 ```bash
 ghx xcache stats           # Show hit rates and per-command breakdown
 ghx xcache flush           # Flush all entries
-ghx xcache flush pr        # Flush PR-related entries only
 ghx xcache keys            # List cached keys (debugging)
 ```
 

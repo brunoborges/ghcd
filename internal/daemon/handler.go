@@ -187,11 +187,7 @@ func (h *Handler) handleStats() *protocol.Response {
 }
 
 func (h *Handler) handleFlush(req *protocol.Request) *protocol.Response {
-	var resource allowlist.ResourceType
-	if len(req.Args) > 0 {
-		resource = allowlist.ResourceType(req.Args[0])
-	}
-	count := h.cache.Flush(resource)
+	count := h.cache.Flush()
 	msg := []byte(fmt.Sprintf("flushed %d entries\n", count))
 	return &protocol.Response{Stdout: msg}
 }
