@@ -579,10 +579,26 @@ cd ghx &amp;&amp; make build</pre>
         </div>
       </div>
     </div>
-    <p style="text-align:center; color: var(--text-dim); max-width: 640px; margin: 24px auto 0; font-size: 14px;">
-      Already have the GitHub CLI installed? The shim is skipped, and <code style="color:var(--green)">ghx</code> uses your existing <code>gh</code> directly.
-      Your agents can still benefit — just install the <a href="#plugin" style="color:var(--accent)">agent plugin</a> to teach them to prefer <code>ghx</code>.
-    </p>
+    <div style="max-width: 640px; margin: 32px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;">
+      <h3 style="font-size: 15px; margin-bottom: 12px;">⚠️ Already have the GitHub CLI installed?</h3>
+      <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 12px;">
+        When a real <code>gh</code> binary is detected, ghx <strong style="color:var(--text)">will not install the shim</strong> — so agents will keep calling <code>gh</code> directly, bypassing the cache. You have two options:
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="color: var(--green); font-weight: 700; flex-shrink: 0;">Option A</span>
+          <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+            <strong style="color:var(--text)">Remove the GitHub CLI</strong> and reinstall ghx. The shim will be created, and agents automatically get caching via <code>gh</code>. ghx will download the real <code>gh</code> binary on first use.
+          </p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="color: var(--accent); font-weight: 700; flex-shrink: 0;">Option B</span>
+          <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+            <strong style="color:var(--text)">Keep the GitHub CLI</strong> and install the <a href="#plugin" style="color:var(--accent)">agent plugin</a> instead. The plugin teaches agents to call <code style="color:var(--green)">ghx</code> directly instead of <code>gh</code>.
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
