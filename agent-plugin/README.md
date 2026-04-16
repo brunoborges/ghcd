@@ -1,4 +1,4 @@
-# ghxd — Agentic CLI Plugin
+# ghx — Agentic CLI Plugin
 
 A plugin for [Claude Code](https://code.claude.com/docs/en/plugins) and [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins) that installs and configures [ghxd](https://github.com/brunoborges/ghx) — a caching proxy for the GitHub CLI (`gh`).
 
@@ -10,7 +10,7 @@ When enabled, this plugin:
 
 1. **Installs `ghx` and `ghxd`** automatically on first use (lazy install)
 2. **Adds `ghx` to PATH** so agents can use it as a drop-in replacement for `gh`
-3. **Teaches Claude to prefer `ghx`** over `gh` via a built-in skill, so all GitHub CLI calls go through the caching proxy
+3. **Teaches Claude and Copilot to prefer `ghx`** over `gh` via a built-in skill, so all GitHub CLI calls go through the caching proxy
 
 This eliminates redundant API calls, prevents rate limiting, and dramatically speeds up repeated `gh` commands in agentic workflows.
 
@@ -46,19 +46,19 @@ GHCD_VERSION=v1.0.0 ghx pr list
 
 ### Skill: automatic `ghx` preference
 
-The plugin includes a skill that instructs Claude to use `ghx` instead of `gh` for all GitHub CLI commands. Claude loads this skill automatically when relevant — no manual invocation needed.
+The plugin includes a skill that instructs Claude to use `ghx` instead of `gh` for all GitHub CLI commands. Claude and Copilot CLI load this skill automatically when relevant — no manual invocation needed.
 
 You can also invoke it explicitly:
 
 ```
-/ghxd:ghxd
+/ghx:ghx
 ```
 
 ### Cache behavior
 
 ```
 First call:   ghx pr list ...   → ~1.1s (cache miss, calls gh)
-Second call:  ghx pr list ...   → ~0.1s (cache hit, instant)
+Second call:  ghx pr list ...   → ~0.01s (cache hit, instant)
 After TTL:    ghx pr list ...   → ~1.0s (TTL expired, fresh call)
 ```
 
@@ -81,9 +81,9 @@ agent-plugin/
 
 ## Requirements
 
-- macOS or Linux (amd64 or arm64)
+- macOS or Windows/Linux (amd64 or arm64)
 - `curl` and `tar` available in PATH
-- `gh` (GitHub CLI) is **optional** — if not installed, `ghx` auto-downloads it on first use. However, `gh auth login` must be run before using any authenticated commands.
+- `gh` (GitHub CLI) is **optional** — if not installed, `ghx` auto-downloads it on first use, and deploys a shim `gh` command. However, `gh auth login` must be run before using any authenticated commands.
 
 ## Learn more
 
