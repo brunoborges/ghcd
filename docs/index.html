@@ -311,6 +311,8 @@ footer a:hover { color: var(--text); }
   .hero { padding: 60px 0 40px; }
   .features-grid { grid-template-columns: 1fr; }
   nav .links a:not(.gh-btn) { display: none; }
+  .how-it-works-layout { flex-direction: column !important; align-items: center !important; }
+  .how-it-works-layout .arch-diagram { min-width: unset !important; }
 }
 </style>
 </head>
@@ -322,7 +324,6 @@ footer a:hover { color: var(--text); }
   <div class="inner">
     <a href="#" class="logo">⚡ <span>ghx</span></a>
     <div class="links">
-      <a href="#architecture">Architecture</a>
       <a href="#features">Features</a>
       <a href="#benchmark">Performance</a>
       <a href="#dashboard">Dashboard</a>
@@ -349,64 +350,6 @@ footer a:hover { color: var(--text); }
     <div class="cta-row">
       <a href="#install" class="btn btn-primary">Get Started</a>
       <a href="https://github.com/brunoborges/ghx" class="btn btn-secondary" target="_blank">View on GitHub</a>
-    </div>
-  </div>
-</section>
-
-<!-- Architecture -->
-<section style="padding: 60px 0 20px;" id="architecture">
-  <div class="container">
-    <h2 style="text-align:center; font-size:32px; margin-bottom:48px;">How It Works</h2>
-    <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0;">
-
-      <!-- Agents row -->
-      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px;">
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; text-align: center; min-width: 100px;">
-          <div style="font-size: 13px; font-weight: 600;">Agent 1</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-dim);">ghx</div>
-        </div>
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; text-align: center; min-width: 100px;">
-          <div style="font-size: 13px; font-weight: 600;">Agent 2</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-dim);">ghx</div>
-        </div>
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; text-align: center; min-width: 100px;">
-          <div style="font-size: 13px; font-weight: 600;">Agent 3</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-dim);">ghx</div>
-        </div>
-      </div>
-
-      <!-- Connector -->
-      <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 2px; height: 20px; background: var(--border);"></div>
-        <div style="font-size: 11px; color: var(--text-dimmer); font-family: var(--mono); padding: 4px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg);">IPC</div>
-        <div style="width: 2px; height: 20px; background: var(--border);"></div>
-      </div>
-
-      <!-- Daemon box -->
-      <div style="background: linear-gradient(135deg, rgba(56,139,253,0.08), rgba(63,185,80,0.08)); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 32px; text-align: center; width: 100%; max-width: 340px;">
-        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: var(--mono); color: var(--accent);">ghxd</div>
-        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">daemon</div>
-        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-          <span style="font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Cache (LRU)</span>
-          <span style="font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Singleflight</span>
-          <span style="font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Metrics</span>
-          <span style="font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Dashboard</span>
-        </div>
-      </div>
-
-      <!-- Connector -->
-      <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 2px; height: 20px; background: var(--border);"></div>
-        <div style="font-size: 11px; color: var(--text-dimmer); font-family: var(--mono); padding: 4px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg);">exec</div>
-        <div style="width: 2px; height: 20px; background: var(--border);"></div>
-      </div>
-
-      <!-- gh box -->
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 32px; text-align: center;">
-        <div style="font-size: 16px; font-weight: 700; font-family: var(--mono);">gh</div>
-        <div style="font-size: 11px; color: var(--text-dim);">GitHub CLI</div>
-      </div>
-
     </div>
   </div>
 </section>
@@ -481,35 +424,86 @@ footer a:hover { color: var(--text); }
 <section class="how-it-works" id="how">
   <div class="container">
     <h2>How It Works</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="num">1</div>
-        <div class="content">
-          <h3>You run <code>ghx pr list</code></h3>
-          <p>The <code>ghx</code> client resolves your repo, branch, and auth context, then forwards the request to the <code>ghxd</code> daemon over a Unix socket.</p>
+    <div class="how-it-works-layout" style="display: flex; gap: 48px; align-items: flex-start; max-width: 960px; margin: 0 auto;">
+
+      <!-- Architecture diagram (left) -->
+      <div class="arch-diagram" style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 260px;">
+        <!-- Agents row -->
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 8px;">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; text-align: center;">
+            <div style="font-size: 12px; font-weight: 600;">Agent 1</div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--text-dim);">ghx</div>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; text-align: center;">
+            <div style="font-size: 12px; font-weight: 600;">Agent 2</div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--text-dim);">ghx</div>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; text-align: center;">
+            <div style="font-size: 12px; font-weight: 600;">Agent 3</div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--text-dim);">ghx</div>
+          </div>
+        </div>
+        <!-- Connector -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 2px; height: 16px; background: var(--border);"></div>
+          <div style="font-size: 10px; color: var(--text-dimmer); font-family: var(--mono); padding: 3px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg);">IPC</div>
+          <div style="width: 2px; height: 16px; background: var(--border);"></div>
+        </div>
+        <!-- Daemon box -->
+        <div style="background: linear-gradient(135deg, rgba(56,139,253,0.08), rgba(63,185,80,0.08)); border: 1px solid var(--accent); border-radius: var(--radius); padding: 20px 24px; text-align: center; width: 100%;">
+          <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px; font-family: var(--mono); color: var(--accent);">ghxd</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">daemon</div>
+          <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+            <span style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Cache</span>
+            <span style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Singleflight</span>
+            <span style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);">Metrics</span>
+          </div>
+        </div>
+        <!-- Connector -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 2px; height: 16px; background: var(--border);"></div>
+          <div style="font-size: 10px; color: var(--text-dimmer); font-family: var(--mono); padding: 3px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg);">exec</div>
+          <div style="width: 2px; height: 16px; background: var(--border);"></div>
+        </div>
+        <!-- gh box -->
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 28px; text-align: center;">
+          <div style="font-size: 14px; font-weight: 700; font-family: var(--mono);">gh</div>
+          <div style="font-size: 10px; color: var(--text-dim);">GitHub CLI</div>
         </div>
       </div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="content">
-          <h3>Daemon checks the cache</h3>
-          <p>Using a context-aware key (repo + branch + host + auth + args), it looks for a valid cached response. If found and within TTL, it returns instantly.</p>
+
+      <!-- Steps (right) -->
+      <div class="steps" style="margin: 0; flex: 1;">
+        <div class="step">
+          <div class="num">1</div>
+          <div class="content">
+            <h3>You run <code>ghx pr list</code></h3>
+            <p>The <code>ghx</code> client resolves your repo, branch, and auth context, then forwards the request to the <code>ghxd</code> daemon over a Unix socket.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="content">
+            <h3>Daemon checks the cache</h3>
+            <p>Using a context-aware key (repo + branch + host + auth + args), it looks for a valid cached response. If found and within TTL, it returns instantly.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div class="content">
+            <h3>Cache miss? One execution only</h3>
+            <p>On a miss, the daemon executes <code>gh</code> once. If other clients request the same thing concurrently (singleflight), they all wait for and share the single result.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="content">
+            <h3>Response is cached and returned</h3>
+            <p>The stdout, stderr, and exit code are cached with a configurable TTL (default 30s). The client writes stdout/stderr and exits with the original exit code.</p>
+          </div>
         </div>
       </div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="content">
-          <h3>Cache miss? One execution only</h3>
-          <p>On a miss, the daemon executes <code>gh</code> once. If other clients request the same thing concurrently (singleflight), they all wait for and share the single result.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="num">4</div>
-        <div class="content">
-          <h3>Response is cached and returned</h3>
-          <p>The stdout, stderr, and exit code are cached with a configurable TTL (default 30s). The client writes stdout/stderr and exits with the original exit code.</p>
-        </div>
-      </div>
+
     </div>
   </div>
 </section>
