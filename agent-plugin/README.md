@@ -83,7 +83,7 @@ agent-plugin/
 
 - [Claude Code Plugins documentation](https://code.claude.com/docs/en/plugins)
 - [GitHub Copilot CLI Plugins documentation](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins)
-- [ghxd project](https://github.com/brunoborges/ghx)
+- [ghx project](https://github.com/brunoborges/ghx)
 
 ## License
 
