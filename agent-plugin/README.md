@@ -38,12 +38,6 @@ claude --plugin-dir ./agent-plugin
 
 The plugin ships wrapper scripts in `bin/` that are automatically added to PATH. On first invocation, the wrapper downloads and installs the real `ghx` and `ghxd` binaries to the plugin's persistent data directory (`${CLAUDE_PLUGIN_DATA}/bin`).
 
-To pin a specific version:
-
-```bash
-GHCD_VERSION=v1.0.0 ghx pr list
-```
-
 ### Skill: automatic `ghx` preference
 
 The plugin includes a skill that instructs Claude to use `ghx` instead of `gh` for all GitHub CLI commands. Claude and Copilot CLI load this skill automatically when relevant — no manual invocation needed.

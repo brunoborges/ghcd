@@ -28,14 +28,10 @@ case "$ARCH" in
   *)             echo "ghxd-install: unsupported architecture: $ARCH" >&2; exit 1 ;;
 esac
 
-# Determine version to install
-VERSION="${GHCD_VERSION:-latest}"
-if [ "$VERSION" = "latest" ]; then
-  # Find the latest non-plugin release (skip plugin-v* tags)
-  VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" 2>/dev/null \
-    | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' \
-    | grep -v '^plugin-' | head -1)" || true
-fi
+# Find the latest non-plugin release (skip plugin-v* tags)
+VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" 2>/dev/null \
+  | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' \
+  | grep -v '^plugin-' | head -1)" || true
 
 if [ -z "$VERSION" ]; then
   echo "ghxd-install: could not determine version to install" >&2

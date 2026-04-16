@@ -20,13 +20,9 @@ rem Detect architecture
 set "ARCH=amd64"
 if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "ARCH=arm64"
 
-rem Determine version to install
-if defined GHCD_VERSION (
-    set "VERSION=%GHCD_VERSION%"
-) else (
-    set "VERSION="
-    for /f "tokens=*" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/%REPO%/releases' -UseBasicParsing) | Where-Object { $_.tag_name -notmatch '^plugin-' } | Select-Object -First 1 -ExpandProperty tag_name"') do set "VERSION=%%i"
-)
+rem Find the latest non-plugin release (skip plugin-v* tags)
+set "VERSION="
+for /f "tokens=*" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/%REPO%/releases' -UseBasicParsing) | Where-Object { $_.tag_name -notmatch '^plugin-' } | Select-Object -First 1 -ExpandProperty tag_name"') do set "VERSION=%%i"
 
 if "%VERSION%"=="" (
     echo ghxd-install: could not determine version to install 1>&2
