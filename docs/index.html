@@ -121,6 +121,8 @@ nav .links .gh-btn svg { width: 16px; height: 16px; fill: var(--text-dim); }
   max-width: 620px;
   margin: 0 auto 40px;
 }
+.hero .subtitle a { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; transition: color 0.2s; }
+.hero .subtitle a:hover { color: var(--accent); }
 .hero .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
@@ -329,7 +331,7 @@ footer a:hover { color: var(--text); }
     <div class="badge">⚡ Built for AI agent workflows</div>
     <h1>Stop hitting<br><span class="gradient">GitHub rate limits</span></h1>
     <p class="subtitle">
-      A caching proxy for the <strong>GitHub CLI</strong> that makes repeated commands instant.
+      A caching proxy for the <strong><a href="https://cli.github.com" target="_blank">GitHub CLI</a></strong> that makes repeated commands instant.
       Singleflight coalescing means 10 agents asking the same thing triggers just 1 API call.
     </p>
     <div class="cta-row">
