@@ -70,7 +70,21 @@ curl -fsSL https://github.com/brunoborges/ghx/releases/latest/download/ghx-linux
 sudo cp ghx ghxd /usr/local/bin/
 ```
 
-On Windows, download the `.zip` from [GitHub Releases](https://github.com/brunoborges/ghx/releases) and extract `ghx.exe` and `ghxd.exe` to a directory on your PATH.
+On Windows, download and extract with PowerShell:
+
+```powershell
+# Windows (x64)
+Invoke-WebRequest https://github.com/brunoborges/ghx/releases/latest/download/ghx-windows-amd64.zip -OutFile ghx.zip
+Expand-Archive ghx.zip -DestinationPath ghx
+Copy-Item ghx\ghx.exe, ghx\ghxd.exe -Destination "$env:LOCALAPPDATA\Microsoft\WinGet\Packages"
+
+# Windows (arm64)
+Invoke-WebRequest https://github.com/brunoborges/ghx/releases/latest/download/ghx-windows-arm64.zip -OutFile ghx.zip
+Expand-Archive ghx.zip -DestinationPath ghx
+Copy-Item ghx\ghx.exe, ghx\ghxd.exe -Destination "$env:LOCALAPPDATA\Microsoft\WinGet\Packages"
+```
+
+Make sure the destination directory is on your `PATH`, or copy the binaries to any directory that is.
 
 ### Build from source
 
