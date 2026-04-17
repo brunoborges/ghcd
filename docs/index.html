@@ -26,6 +26,7 @@
       <a href="#install">Install</a>
       <a href="#gh-shim">gh Shim</a>
       <a href="#plugin">Agent Plugin</a>
+      <a href="#security">Security</a>
       <a href="https://github.com/brunoborges/ghx" class="gh-btn" target="_blank">
         <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub
@@ -201,6 +202,15 @@
     <h2>Live Dashboard</h2>
     <p class="subtitle">Monitor cache performance at <code>http://localhost:9847/</code></p>
     <img src="ghx-dashboard.png" alt="ghx Dashboard showing hit rates, per-command stats, and request log" loading="lazy">
+    <div style="margin-top: 32px; color: var(--text-dim); font-size: 14px; max-width: 640px; margin: 32px auto 0;">
+      <h3 style="font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 10px;">JSON API</h3>
+      <p style="margin-bottom: 12px;">
+        The dashboard data is also available as JSON for scripting and automation:
+      </p>
+      <pre style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-family: var(--mono); font-size: 13px; color: var(--text); line-height: 1.8; overflow-x: auto;"><span class="cmd-line"><code>curl http://localhost:9847/api/stats | jq .</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
+<span class="cmd-line"><code>curl http://localhost:9847/api/log?limit=50 | jq .</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span>
+<span class="cmd-line"><code>curl http://localhost:9847/api/ttl-analysis | jq .</code><button class="copy-btn" onclick="copyCmd(this)" title="Copy">&#x2398;</button></span></pre>
+    </div>
   </div>
 </section>
 
@@ -376,6 +386,41 @@ additional_cacheable:
     <div style="text-align:center; margin-top: 36px;">
       <a href="https://github.com/brunoborges/ghx/tree/main/agent-plugin" class="btn btn-secondary" target="_blank" style="margin-right:12px;">Plugin Docs</a>
       <a href="https://github.com/brunoborges/agent-plugins" class="btn btn-primary" target="_blank">Marketplace Repo</a>
+    </div>
+  </div>
+</section>
+
+<!-- Security -->
+<section class="features" id="security">
+  <div class="container">
+    <h2>Security</h2>
+    <p class="subtitle">ghx is designed to be safe by default — no secrets stored, no network exposure.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">🔒</div>
+        <h3>Owner-Only Socket</h3>
+        <p>The Unix domain socket uses <code>0600</code> permissions. Only your user can communicate with the daemon.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔑</div>
+        <h3>No Tokens Stored</h3>
+        <p>Auth tokens are never written to disk or cache. Only a SHA-256 fingerprint is used in cache keys to prevent cross-account collisions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌐</div>
+        <h3>Localhost-Only Dashboard</h3>
+        <p>The web dashboard binds to <code>127.0.0.1</code> only — it is not accessible from the network.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">💨</div>
+        <h3>In-Memory Cache</h3>
+        <p>All cached data lives in memory and is lost on daemon restart. Nothing is persisted to disk.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">👤</div>
+        <h3>Per-User Isolation</h3>
+        <p>Each user runs their own isolated daemon instance. No shared state between users on the same machine.</p>
+      </div>
     </div>
   </div>
 </section>
