@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -70,10 +69,7 @@ func (h *Handler) handleExec(req *protocol.Request) *protocol.Response {
 	classification := h.classifier.Classify(req.Args)
 	cmdKey := classification.CmdKey
 	if cmdKey == "" {
-		cmdKey = strings.Join(req.Args, "_")
-		if len(cmdKey) > 40 {
-			cmdKey = cmdKey[:40]
-		}
+		cmdKey = sanitizeCmdKey(req.Args)
 	}
 
 	// Non-cacheable: execute directly via daemon (captures output)
@@ -196,4 +192,18 @@ func (h *Handler) handleKeys() *protocol.Response {
 	keys := h.cache.Keys()
 	data, _ := json.Marshal(keys)
 	return &protocol.Response{Stdout: data}
+}
+
+// sanitizeCmdKey builds a metrics key from at most the first two args
+// (subcommand + action), avoiding exposure of flags or values that could
+// contain sensitive data.
+func sanitizeCmdKey(args []string) string {
+	switch {
+	case len(args) >= 2:
+		return args[0] + "_" + args[1]
+	case len(args) == 1:
+		return args[0]
+	default:
+		return "unknown"
+	}
 }
