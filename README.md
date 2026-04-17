@@ -144,6 +144,11 @@ exec ghx "$@"
 
 This means existing tools, scripts, and CI workflows that call `gh` will automatically benefit from caching — no changes needed. If a real `gh` binary is already available, the shim is skipped and you can use `ghx` directly.
 
+> **Already have the GitHub CLI installed?** When a real `gh` binary is detected, the shim is not installed — so agents will keep calling `gh` directly, bypassing the cache. You have two options:
+>
+> - **Option A:** Remove the GitHub CLI and reinstall ghx. The shim will be created and agents automatically get caching via `gh`. ghx will download the real `gh` binary on first use.
+> - **Option B:** Keep the GitHub CLI and install the [agent plugin](#agents-plugin-claude-code--copilot-cli) instead. The plugin teaches agents to call `ghx` directly instead of `gh`.
+
 | Install method | Shim location | Notes |
 |---|---|---|
 | **install.sh** | `$INSTALL_DIR/gh` (default `/usr/local/bin/gh`) | Skipped if a real `gh` binary exists anywhere on the system |
