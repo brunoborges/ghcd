@@ -34,63 +34,12 @@ func main() {
 	}
 
 	// Handle ghx-specific subcommands (x-prefixed to avoid conflicts with gh)
-	switch args[0] {
-	case "xversion":
-		fmt.Printf("ghx version %s\n", version)
-		return
-	case "xhelp":
-		fmt.Println("ghx — GitHub CLI Cache Proxy")
-		fmt.Printf("Version: %s\n", version)
-		fmt.Println()
-		fmt.Println("Usage: ghx [flags] <gh command> [args...]")
-		fmt.Println()
-		fmt.Println("Flags:")
-		fmt.Println("  --no-cache    Bypass cache for this request")
-		fmt.Println("  --ttl <sec>   Override TTL for this request")
-		fmt.Println()
-		fmt.Println("Commands (x-prefixed to avoid conflicts with gh):")
-		fmt.Println("  xversion      Show ghx version")
-		fmt.Println("  xhelp         Show this help")
-		fmt.Println("  xdaemon       Manage the ghxd daemon (start|stop|status|restart)")
-		fmt.Println("  xcache        Manage the cache (stats|flush|keys)")
-		fmt.Println("  ghcli         Manage the GitHub CLI binary (status|upgrade)")
-		fmt.Println()
-		fmt.Println("All other arguments are forwarded to gh via the caching daemon.")
-		fmt.Printf("Config: ~/.ghx/\n")
-		fmt.Printf("Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)
-		return
-	case "xdaemon":
-		handleDaemon(cfg, args[1:])
-		return
-	case "xcache":
-		handleCache(cfg, args[1:])
-		return
-	case "ghcli":
-		handleGH(cfg, args[1:])
+	if handled := handleSubcommand(cfg, args); handled {
 		return
 	}
 
 	// Parse ghx flags (before the gh args)
-	noCache := os.Getenv("GHX_NO_CACHE") == "1"
-	ttlOverride := 0
-	var ghArgs []string
-
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--no-cache":
-			noCache = true
-		case "--ttl":
-			if i+1 < len(args) {
-				i++
-				if v, err := strconv.Atoi(args[i]); err == nil {
-					ttlOverride = v
-				}
-			}
-		default:
-			ghArgs = append(ghArgs, args[i:]...)
-			i = len(args) // break
-		}
-	}
+	ghArgs, noCache, ttlOverride := parseGHXFlags(args)
 
 	if len(ghArgs) == 0 {
 		mustResolveGH(cfg)
@@ -104,33 +53,14 @@ func main() {
 	// Resolve execution context
 	ctx := execctx.Resolve(cfg.GHPath)
 
-	// Connect to daemon
+	// Connect to daemon, auto-starting if needed
 	cl := client.New(cfg.SocketPath)
-
-	// Auto-start daemon if not running
-	if !cl.IsRunning() {
-		if cfg.AutoStart {
-			if err := startDaemon(cfg); err != nil {
-				fmt.Fprintf(os.Stderr, "ghx: daemon auto-start failed: %v (falling back to direct gh)\n", err)
-				execDirect(cfg.GHPath, ghArgs)
-				return
-			}
-			// Wait for daemon to be ready
-			for i := 0; i < 20; i++ {
-				if cl.IsRunning() {
-					break
-				}
-				time.Sleep(100 * time.Millisecond)
-			}
-			if !cl.IsRunning() {
-				fmt.Fprintf(os.Stderr, "ghx: daemon failed to start in time (falling back to direct gh)\n")
-				execDirect(cfg.GHPath, ghArgs)
-				return
-			}
-		} else {
-			execDirect(cfg.GHPath, ghArgs)
-			return
+	if ready, err := ensureDaemon(cfg, cl); !ready {
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ghx: %v (falling back to direct gh)\n", err)
 		}
+		execDirect(cfg.GHPath, ghArgs)
+		return
 	}
 
 	// Send request to daemon
@@ -160,6 +90,96 @@ func main() {
 	os.Exit(resp.ExitCode)
 }
 
+// handleSubcommand handles ghx-specific subcommands. Returns true if handled.
+func handleSubcommand(cfg *config.Config, args []string) bool {
+	switch args[0] {
+	case "xversion":
+		fmt.Printf("ghx version %s\n", version)
+	case "xhelp":
+		printHelp(cfg)
+	case "xdaemon":
+		handleDaemon(cfg, args[1:])
+	case "xcache":
+		handleCache(cfg, args[1:])
+	case "ghcli":
+		handleGH(cfg, args[1:])
+	default:
+		return false
+	}
+	return true
+}
+
+func printHelp(cfg *config.Config) {
+	fmt.Println("ghx — GitHub CLI Cache Proxy")
+	fmt.Printf("Version: %s\n", version)
+	fmt.Println()
+	fmt.Println("Usage: ghx [flags] <gh command> [args...]")
+	fmt.Println()
+	fmt.Println("Flags:")
+	fmt.Println("  --no-cache    Bypass cache for this request")
+	fmt.Println("  --ttl <sec>   Override TTL for this request")
+	fmt.Println()
+	fmt.Println("Commands (x-prefixed to avoid conflicts with gh):")
+	fmt.Println("  xversion      Show ghx version")
+	fmt.Println("  xhelp         Show this help")
+	fmt.Println("  xdaemon       Manage the ghxd daemon (start|stop|status|restart)")
+	fmt.Println("  xcache        Manage the cache (stats|flush|keys)")
+	fmt.Println("  ghcli         Manage the GitHub CLI binary (status|upgrade)")
+	fmt.Println()
+	fmt.Println("All other arguments are forwarded to gh via the caching daemon.")
+	fmt.Printf("Config: ~/.ghx/\n")
+	fmt.Printf("Dashboard: http://127.0.0.1:%d/\n", cfg.DashboardPort)
+}
+
+// parseGHXFlags extracts ghx-specific flags from the argument list.
+// It stops at the first unrecognized argument, treating the rest as gh args.
+func parseGHXFlags(args []string) (ghArgs []string, noCache bool, ttlOverride int) {
+	noCache = os.Getenv("GHX_NO_CACHE") == "1"
+
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--no-cache":
+			noCache = true
+		case "--ttl":
+			if i+1 < len(args) {
+				i++
+				if v, err := strconv.Atoi(args[i]); err == nil {
+					ttlOverride = v
+				}
+			}
+		default:
+			ghArgs = append(ghArgs, args[i:]...)
+			return
+		}
+	}
+	return
+}
+
+// ensureDaemon makes sure the daemon is running, auto-starting it if configured.
+// Returns (true, nil) if daemon is ready, (false, nil) if auto-start is disabled,
+// or (false, err) if auto-start failed.
+func ensureDaemon(cfg *config.Config, cl *client.Client) (bool, error) {
+	if cl.IsRunning() {
+		return true, nil
+	}
+	if !cfg.AutoStart {
+		return false, nil
+	}
+
+	if err := startDaemon(cfg); err != nil {
+		return false, fmt.Errorf("daemon auto-start failed: %v", err)
+	}
+
+	// Wait for daemon to be ready
+	for i := 0; i < 20; i++ {
+		if cl.IsRunning() {
+			return true, nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return false, fmt.Errorf("daemon failed to start in time")
+}
+
 func handleDaemon(cfg *config.Config, args []string) {
 	if len(args) == 0 {
 		fmt.Println("Usage: ghx xdaemon <start|stop|status|restart>")
@@ -168,27 +188,7 @@ func handleDaemon(cfg *config.Config, args []string) {
 
 	switch args[0] {
 	case "start":
-		detach := false
-		for _, a := range args[1:] {
-			if a == "-d" || a == "--detach" {
-				detach = true
-			}
-		}
-		if detach {
-			if err := startDaemon(cfg); err != nil {
-				fmt.Fprintf(os.Stderr, "ghx: failed to start daemon: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Printf("ghx: daemon started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", cfg.SocketPath, cfg.DashboardPort)
-		} else {
-			// Foreground mode — exec the daemon directly
-			ghxdPath, err := findGHXD()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
-				os.Exit(1)
-			}
-			execReplace(ghxdPath, []string{"ghxd"}, os.Environ())
-		}
+		handleDaemonStart(cfg, args[1:])
 
 	case "stop":
 		cl := client.New(cfg.SocketPath)
@@ -225,6 +225,34 @@ func handleDaemon(cfg *config.Config, args []string) {
 		fmt.Fprintf(os.Stderr, "ghx: unknown daemon command: %s\n", args[0])
 		os.Exit(1)
 	}
+}
+
+func handleDaemonStart(cfg *config.Config, args []string) {
+	if isDetachMode(args) {
+		if err := startDaemon(cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "ghx: failed to start daemon: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("ghx: daemon started (socket: %s, dashboard: http://127.0.0.1:%d/)\n", cfg.SocketPath, cfg.DashboardPort)
+		return
+	}
+	// Foreground mode — exec the daemon directly
+	ghxdPath, err := findGHXD()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ghx: %v\n", err)
+		os.Exit(1)
+	}
+	execReplace(ghxdPath, []string{"ghxd"}, os.Environ())
+}
+
+// isDetachMode returns true if args contain a detach flag.
+func isDetachMode(args []string) bool {
+	for _, a := range args {
+		if a == "-d" || a == "--detach" {
+			return true
+		}
+	}
+	return false
 }
 
 func handleCache(cfg *config.Config, args []string) {

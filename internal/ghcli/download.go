@@ -73,56 +73,70 @@ func downloadToWithVersion(destPath string, force bool) (string, error) {
 
 	fmt.Fprintf(os.Stderr, "ghx: downloading GitHub CLI v%s...\n", version)
 
+	if err := fetchAndInstall(version, destPath); err != nil {
+		return "", err
+	}
+
+	fmt.Fprintf(os.Stderr, "ghx: GitHub CLI v%s installed to %s\n", version, destPath)
+	return version, nil
+}
+
+// fetchAndInstall downloads, verifies, extracts, and installs the gh binary.
+func fetchAndInstall(version, destPath string) error {
 	asset, err := assetName(version)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	tmpDir, err := os.MkdirTemp("", "ghx-gh-download-*")
 	if err != nil {
-		return "", fmt.Errorf("creating temp dir: %w", err)
+		return fmt.Errorf("creating temp dir: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Download checksums for verification
-	checksums, checksumErr := downloadChecksums(version)
-	if checksumErr != nil {
-		fmt.Fprintf(os.Stderr, "ghx: warning: could not download checksums: %v\n", checksumErr)
-	}
-
-	// Download archive
 	archivePath := filepath.Join(tmpDir, asset)
-	downloadURL := fmt.Sprintf("%s/v%s/%s", releasesBaseURL, version, asset)
-	if err := downloadFile(downloadURL, archivePath); err != nil {
-		return "", fmt.Errorf("downloading %s: %w", asset, err)
-	}
-
-	// Verify checksum if available
-	if checksums != nil {
-		if expected, ok := checksums[asset]; ok {
-			if err := verifyChecksum(archivePath, expected); err != nil {
-				return "", fmt.Errorf("checksum verification failed for %s: %w", asset, err)
-			}
-		}
+	if err := downloadAndVerify(version, asset, archivePath); err != nil {
+		return err
 	}
 
 	// Extract gh binary
 	ghBinaryPath := filepath.Join(tmpDir, "gh-extracted")
 	if err := extractGH(archivePath, ghBinaryPath); err != nil {
-		return "", fmt.Errorf("extracting gh binary: %w", err)
+		return fmt.Errorf("extracting gh binary: %w", err)
 	}
 
 	if err := os.Chmod(ghBinaryPath, 0755); err != nil {
-		return "", fmt.Errorf("setting permissions: %w", err)
+		return fmt.Errorf("setting permissions: %w", err)
 	}
 
 	// Atomic install: rename or copy
 	if err := atomicInstall(ghBinaryPath, destPath); err != nil {
-		return "", fmt.Errorf("installing gh binary: %w", err)
+		return fmt.Errorf("installing gh binary: %w", err)
+	}
+	return nil
+}
+
+// downloadAndVerify downloads the archive and verifies its checksum if available.
+func downloadAndVerify(version, asset, archivePath string) error {
+	// Download checksums for verification (failure is non-fatal)
+	checksums, checksumErr := downloadChecksums(version)
+	if checksumErr != nil {
+		fmt.Fprintf(os.Stderr, "ghx: warning: could not download checksums: %v\n", checksumErr)
 	}
 
-	fmt.Fprintf(os.Stderr, "ghx: GitHub CLI v%s installed to %s\n", version, destPath)
-	return version, nil
+	downloadURL := fmt.Sprintf("%s/v%s/%s", releasesBaseURL, version, asset)
+	if err := downloadFile(downloadURL, archivePath); err != nil {
+		return fmt.Errorf("downloading %s: %w", asset, err)
+	}
+
+	if checksums != nil {
+		if expected, ok := checksums[asset]; ok {
+			if err := verifyChecksum(archivePath, expected); err != nil {
+				return fmt.Errorf("checksum verification failed for %s: %w", asset, err)
+			}
+		}
+	}
+	return nil
 }
 
 type ghRelease struct {

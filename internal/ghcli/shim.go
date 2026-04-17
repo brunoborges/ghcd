@@ -1,6 +1,7 @@
 package ghcli
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,30 +65,21 @@ func IsShim(ghPath string, ghxPath string) bool {
 	return strings.Contains(string(header), ShimMarker)
 }
 
+// binaryMagicPrefixes contains byte sequences that identify compiled binaries.
+var binaryMagicPrefixes = [][]byte{
+	{0x7f, 'E', 'L', 'F'},    // ELF
+	{0xca, 0xfe, 0xba, 0xbe}, // Mach-O universal/fat binary
+	{0xcf, 0xfa, 0xed, 0xfe}, // Mach-O 64-bit
+	{0xce, 0xfa, 0xed, 0xfe}, // Mach-O 32-bit
+	{'M', 'Z'},               // PE (Windows)
+}
+
 // isTextHeader checks if the byte slice looks like a text file (not a compiled binary).
 func isTextHeader(data []byte) bool {
-	if len(data) < 4 {
-		return true
-	}
-	// ELF magic
-	if data[0] == 0x7f && data[1] == 'E' && data[2] == 'L' && data[3] == 'F' {
-		return false
-	}
-	// Mach-O universal/fat binary
-	if data[0] == 0xca && data[1] == 0xfe && data[2] == 0xba && data[3] == 0xbe {
-		return false
-	}
-	// Mach-O 64-bit
-	if data[0] == 0xcf && data[1] == 0xfa && data[2] == 0xed && data[3] == 0xfe {
-		return false
-	}
-	// Mach-O 32-bit
-	if data[0] == 0xce && data[1] == 0xfa && data[2] == 0xed && data[3] == 0xfe {
-		return false
-	}
-	// PE (Windows)
-	if data[0] == 'M' && data[1] == 'Z' {
-		return false
+	for _, magic := range binaryMagicPrefixes {
+		if bytes.HasPrefix(data, magic) {
+			return false
+		}
 	}
 	return true
 }
