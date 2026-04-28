@@ -353,6 +353,75 @@ additional_cacheable:
 
 Each entry should be the full command prefix (e.g., `"gh status"` for a single-word subcommand, or `"gh variable list"` for two-word). Custom commands are classified with `ResourceUnknown` — they participate in caching but won't be invalidated by mutation detection. To apply changes, restart the daemon: `ghxd --restart`.
 
+### TTL Override Keys
+
+The `ttl_overrides` map in config uses **command keys** — normalized identifiers where spaces become underscores. For example, `gh pr list` → `pr_list`.
+
+#### Built-in command keys
+
+| Key | Command |
+|-----|---------|
+| `pr_list` | `gh pr list` |
+| `pr_view` | `gh pr view` |
+| `pr_status` | `gh pr status` |
+| `pr_checks` | `gh pr checks` |
+| `pr_diff` | `gh pr diff` |
+| `issue_list` | `gh issue list` |
+| `issue_view` | `gh issue view` |
+| `issue_status` | `gh issue status` |
+| `repo_view` | `gh repo view` |
+| `repo_list` | `gh repo list` |
+| `run_list` | `gh run list` |
+| `run_view` | `gh run view` |
+| `workflow_list` | `gh workflow list` |
+| `workflow_view` | `gh workflow view` |
+| `release_list` | `gh release list` |
+| `release_view` | `gh release view` |
+| `search_repos` | `gh search repos` |
+| `search_issues` | `gh search issues` |
+| `search_prs` | `gh search prs` |
+| `search_commits` | `gh search commits` |
+| `search_code` | `gh search code` |
+| `label_list` | `gh label list` |
+| `gist_list` | `gh gist list` |
+| `gist_view` | `gh gist view` |
+| `project_list` | `gh project list` |
+| `project_view` | `gh project view` |
+| `project_field-list` | `gh project field-list` |
+| `project_item-list` | `gh project item-list` |
+| `cache_list` | `gh cache list` |
+| `ruleset_list` | `gh ruleset list` |
+| `ruleset_view` | `gh ruleset view` |
+| `ruleset_check` | `gh ruleset check` |
+| `org_list` | `gh org list` |
+| `secret_list` | `gh secret list` |
+| `variable_list` | `gh variable list` |
+| `variable_get` | `gh variable get` |
+| `api_get` | `gh api` (GET requests) |
+
+#### Custom command keys
+
+Commands added via `additional_cacheable` follow the same rule — strip the `gh` prefix and replace spaces with underscores:
+
+| `additional_cacheable` entry | TTL override key |
+|------------------------------|-----------------|
+| `"gh status"` | `status` |
+| `"gh variable list"` | `variable_list` |
+| `"gh codespace list"` | `codespace_list` |
+
+Example combining both:
+
+```yaml
+additional_cacheable:
+  - "gh status"
+  - "gh codespace list"
+
+ttl_overrides:
+  status: 120s
+  codespace_list: 60s
+  pr_list: 90s
+```
+
 ## Configuration
 
 Configuration file: `~/.ghx/config.yaml`
@@ -361,7 +430,7 @@ Configuration file: `~/.ghx/config.yaml`
 # Default TTL for all cached commands (default: 30s)
 ttl: 30s
 
-# Per-command TTL overrides
+# Per-command TTL overrides (see full key list below)
 ttl_overrides:
   pr_list: 60s
   pr_view: 30s
