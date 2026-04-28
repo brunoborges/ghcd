@@ -242,6 +242,40 @@ Second call:  ghx pr list ...   → 0.1s (cache hit, instant)
 After 30s:    ghx pr list ...   → 1.0s (TTL expired, fresh call)
 ```
 
+### How caching works
+
+#### Cache keys
+
+Each cached response is stored under a SHA-256 key computed from:
+
+- **Host** — the GitHub host (e.g., `github.com` or your GHES instance)
+- **Repository** — `owner/repo`
+- **Branch** — current Git branch
+- **Auth token hash** — SHA-256 fingerprint of your token (the token itself is never stored)
+- **Full command arguments** — every argument and flag, in order
+
+This means the **same command with different flags produces different cache entries**:
+
+```bash
+ghx pr list --json number        # cache key A
+ghx pr list --json number,title  # cache key B (different flags)
+ghx pr list --json number        # cache hit on key A
+```
+
+And the same command in **different repos or branches** also gets separate entries — no cross-context collisions.
+
+#### Singleflight coalescing
+
+When multiple agents run the exact same command at the same time (same repo, branch, auth, and flags), ghx **coalesces them into a single `gh` execution**. Only one API call is made; all agents receive the same response.
+
+```
+Agent 1:  ghx pr list --json number  ─┐
+Agent 2:  ghx pr list --json number  ─┼── 1 API call → response shared by all 3
+Agent 3:  ghx pr list --json number  ─┘
+```
+
+This happens automatically — no configuration needed. The coalesced count is visible in `ghx xcache stats` and the web dashboard.
+
 ### Per-command options
 
 ```bash
