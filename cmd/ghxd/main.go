@@ -61,9 +61,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("fatal: cannot find GitHub CLI (gh): %v", err)
 	}
-	cfg.GHPath = resolved
 
-	srv := daemon.NewServer(cfg, version)
+	srv := daemon.NewServer(cfg, version, resolved)
 	if err := srv.Run(); err != nil {
 		log.Fatalf("fatal: %v", err)
 	}

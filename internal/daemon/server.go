@@ -17,10 +17,15 @@ import (
 	"github.com/brunoborges/ghx/internal/cache"
 	"github.com/brunoborges/ghx/internal/config"
 	"github.com/brunoborges/ghx/internal/dashboard"
+	"github.com/brunoborges/ghx/internal/ghcli"
 	"github.com/brunoborges/ghx/internal/ipc"
 	"github.com/brunoborges/ghx/internal/metrics"
 	"github.com/brunoborges/ghx/internal/protocol"
 )
+
+// ghPathRefreshInterval is how often the daemon re-resolves the gh binary path.
+// This ensures the daemon picks up gh upgrades without requiring a restart.
+const ghPathRefreshInterval = 1 * time.Minute
 
 // Server is the ghxd daemon.
 type Server struct {
@@ -36,11 +41,12 @@ type Server struct {
 }
 
 // NewServer creates a new daemon server.
-func NewServer(cfg *config.Config, version string) *Server {
+func NewServer(cfg *config.Config, version string, resolvedGHPath string) *Server {
 	c := cache.New(cfg.MaxCacheEntries)
 	stats := metrics.New()
 	classifier := allowlist.NewClassifier(cfg.AdditionalCache)
 	handler := NewHandler(cfg, c, classifier, stats)
+	handler.SetGHPath(resolvedGHPath)
 
 	return &Server{
 		cfg:     cfg,
@@ -105,6 +111,9 @@ func (s *Server) Run() error {
 	if s.cfg.DashboardPort != 0 {
 		log.Printf("  dashboard: http://127.0.0.1:%d/", s.cfg.DashboardPort)
 	}
+
+	// Start periodic gh path re-resolution
+	go s.refreshGHPath()
 
 	// Accept connections
 	for {
@@ -271,4 +280,28 @@ func (s *Server) writePIDFile() error {
 func (s *Server) removePIDFile() {
 	os.Remove(s.cfg.PIDFile)
 	os.Remove(s.cfg.SocketPath)
+}
+
+// refreshGHPath periodically re-resolves the gh binary path to pick up upgrades.
+func (s *Server) refreshGHPath() {
+	ticker := time.NewTicker(ghPathRefreshInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-ticker.C:
+			resolved, err := ghcli.ResolveGHPath(s.cfg.GHPath)
+			if err != nil {
+				log.Printf("gh path refresh: %v (keeping current)", err)
+				continue
+			}
+			current := s.handler.GHPath()
+			if resolved != current {
+				log.Printf("gh path updated: %s -> %s", current, resolved)
+				s.handler.SetGHPath(resolved)
+			}
+		}
+	}
 }

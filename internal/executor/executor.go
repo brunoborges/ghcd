@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -48,4 +49,10 @@ func Execute(ctx context.Context, ghPath string, args []string, workDir string) 
 	}
 
 	return result
+}
+
+// IsBinaryNotFound reports whether the result indicates the gh binary could not be found or executed.
+func IsBinaryNotFound(ghPath string) bool {
+	_, err := exec.LookPath(ghPath)
+	return errors.Is(err, exec.ErrNotFound) || errors.Is(err, exec.ErrDot)
 }

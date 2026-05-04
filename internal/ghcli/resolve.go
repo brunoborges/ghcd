@@ -13,7 +13,7 @@ import (
 )
 
 // StalenessThreshold is how old a managed gh binary can be before a warning is shown.
-const StalenessThreshold = 30 * 24 * time.Hour // 30 days
+const StalenessThreshold = 7 * 24 * time.Hour // 7 days
 
 // ghBinaryName returns "gh.exe" on Windows, "gh" elsewhere.
 func ghBinaryName() string {

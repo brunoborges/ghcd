@@ -1,6 +1,13 @@
 package daemon
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/brunoborges/ghx/internal/allowlist"
+	"github.com/brunoborges/ghx/internal/cache"
+	"github.com/brunoborges/ghx/internal/config"
+	"github.com/brunoborges/ghx/internal/metrics"
+)
 
 func TestSanitizeCmdKey(t *testing.T) {
 	tests := []struct {
@@ -20,5 +27,25 @@ func TestSanitizeCmdKey(t *testing.T) {
 				t.Errorf("sanitizeCmdKey(%v) = %q, want %q", tt.args, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestHandler_GHPath_AtomicAccess(t *testing.T) {
+	cfg := &config.Config{GHPath: "/usr/bin/gh"}
+	c := cache.New(100)
+	cl := allowlist.NewClassifier(nil)
+	s := metrics.New()
+
+	h := NewHandler(cfg, c, cl, s)
+
+	// Initial value from config
+	if got := h.GHPath(); got != "/usr/bin/gh" {
+		t.Errorf("GHPath() = %q, want %q", got, "/usr/bin/gh")
+	}
+
+	// Update via SetGHPath
+	h.SetGHPath("/opt/homebrew/bin/gh")
+	if got := h.GHPath(); got != "/opt/homebrew/bin/gh" {
+		t.Errorf("GHPath() after set = %q, want %q", got, "/opt/homebrew/bin/gh")
 	}
 }
