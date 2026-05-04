@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -51,8 +53,8 @@ func Execute(ctx context.Context, ghPath string, args []string, workDir string) 
 	return result
 }
 
-// IsBinaryNotFound reports whether the result indicates the gh binary could not be found or executed.
+// IsBinaryNotFound reports whether the given gh binary path cannot be found or resolved.
 func IsBinaryNotFound(ghPath string) bool {
 	_, err := exec.LookPath(ghPath)
-	return errors.Is(err, exec.ErrNotFound) || errors.Is(err, exec.ErrDot)
+	return err != nil && (errors.Is(err, exec.ErrNotFound) || errors.Is(err, exec.ErrDot) || os.IsNotExist(err) || errors.Is(err, fs.ErrNotExist))
 }
