@@ -113,7 +113,11 @@ func (s *Server) Run() error {
 	}
 
 	// Start periodic gh path re-resolution
-	go s.refreshGHPath()
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		s.refreshGHPath()
+	}()
 
 	// Accept connections
 	for {
